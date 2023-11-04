@@ -1,6 +1,9 @@
 package store
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Status int
 
@@ -31,4 +34,15 @@ type Operation struct {
 	CallEvent   time.Time
 	ReturnEvent time.Time
 	Status      Status
+}
+
+func (o Operation) String() string {
+	return fmt.Sprintf(
+		"Operation(id=%d, clientId=%d, api=%d, input=%v, output=%v)",
+		o.ID,
+		o.ClientID,
+		o.API,
+		o.Input,
+		o.Output,
+	)
 }

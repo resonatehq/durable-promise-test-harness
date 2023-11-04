@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"log"
+	"math/rand"
 	"net"
 	"strings"
 	"testing"
@@ -46,6 +47,7 @@ func (s *Simulation) SetupSuite() {
 }
 
 func (s *Simulation) TearDownSuite() {
+	// TODO: clean up resonate.db so doesn't affect stuff
 	// TODO: delete everything created, leave server in original state
 }
 
@@ -65,8 +67,12 @@ func (s *Simulation) TestSingleClientCorrectness() {
 
 		test := NewTest(
 			WithClient(client),
-			WithGenerator(NewGenerator()),
-			WithChecker(checker.New()),
+			WithGenerator(NewGenerator(&GeneratorConfig{
+				r:    rand.New(rand.NewSource(0)),
+				Ids:  100,
+				Data: 100,
+			})),
+			WithChecker(checker.NewChecker()),
 		)
 
 		assert.Nil(t, test.Run()) // output: server logs, checker data
@@ -110,16 +116,19 @@ func WithChecker(c *checker.Checker) TestOption {
 
 func (t *Test) Run() error {
 	log.Printf("running tests...\n")
-
-	s := store.NewStore()
-
-	ops := t.Generator.Generate()
+	st := store.NewStore()
+	ops := t.Generator.Generate(10)
 
 	for _, op := range ops {
-		s.Add(t.Client.Invoke(op))
+		st.Add(t.Client.Invoke(op))
 	}
 
-	return t.Checker.Check(s.History())
+	// write to file - create format:
+	// 1) event history
+	// 2) performance charts
+	log.Println(t.Checker.Timeline(st.History()))
+
+	return t.Checker.Check(st.History())
 }
 
 func IsReady(Addr string) bool {

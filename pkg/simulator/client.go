@@ -114,6 +114,8 @@ func (c *Client) Create(op store.Operation) store.Operation {
 
 	end.ReturnEvent = time.Now()
 
+	// TODO: CHECK STATUS BEFORE ANYTHING
+
 	var out openapi.Promise
 	err = json.Unmarshal(resp.Body, &out)
 	if err != nil {

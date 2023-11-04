@@ -10,7 +10,7 @@ import (
 
 // SERVER_ADDR=http://0.0.0.0:8001/ go test -v ./test/...
 func TestMain(t *testing.T) {
-	addr := os.Getenv("SERVER_ADDR")
+	addr := os.Getenv("DP_SERVER")
 	if addr == "" {
 		addr = "http://0.0.0.0:8001/"
 	}

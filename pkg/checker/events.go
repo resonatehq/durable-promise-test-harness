@@ -1,6 +1,8 @@
 package checker
 
 import (
+	"encoding/json"
+	"fmt"
 	"sort"
 	"time"
 
@@ -22,6 +24,21 @@ type event struct {
 	value    interface{}
 	time     time.Time
 	status   store.Status
+}
+
+func (e event) String() string {
+	v, _ := json.Marshal(e.value)
+
+	return fmt.Sprintf(
+		"event(id=%d, clientId=%d, kind=%v, api=%v, value=%s, time=%v, status=%v)",
+		e.id,
+		e.clientId,
+		e.kind,
+		e.API,
+		string(v),
+		e.time,
+		e.status,
+	)
 }
 
 func makeEvents(history []store.Operation) []event {

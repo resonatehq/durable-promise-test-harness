@@ -11,7 +11,7 @@ type Checker struct {
 	visualizer
 }
 
-func New() *Checker {
+func NewChecker() *Checker {
 	return &Checker{
 		visualizer: newVisualizer(),
 	}
@@ -20,14 +20,7 @@ func New() *Checker {
 // Check verifies the history is linearizable (for correctness).
 func (c *Checker) Check(history []store.Operation) error {
 	events := makeEvents(history)
-	for _, e := range events {
-		fmt.Println(e.value)
-	}
-
-	fmt.Println(c.visualize(events))
-
 	model := NewDurablePromiseModel()
-
 	return checkEvents(model, events)
 }
 
@@ -38,13 +31,13 @@ func checkEvents(model *DurablePromiseModel, events []event) error {
 	for {
 		in, out, next := eventIter.Next()
 		if !next {
-			break // no more events
+			break
 		}
 
 		// TODO: show state -> newState, operation etc. better understandability when something fails
 		newState, err := model.Step(state, in, out)
 		if err != nil {
-			return fmt.Errorf("not lineariable: received bad operation: input=%v output=%v: %v", in.value, out.value, err)
+			return fmt.Errorf("error: received bad operation: input=%s output=%s: %v", in.String(), out.String(), err)
 		}
 
 		state = newState
