@@ -24,6 +24,25 @@ const (
 	Reject
 )
 
+func (a API) String() string {
+	switch a {
+	case Search:
+		return "SEARCH"
+	case Get:
+		return "GET"
+	case Create:
+		return "CREATE"
+	case Cancel:
+		return "CANCEL"
+	case Resolve:
+		return "RESOLVE"
+	case Reject:
+		return "REJECT"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 // Operation is an element of a history.
 type Operation struct {
 	ID          int
@@ -34,6 +53,7 @@ type Operation struct {
 	CallEvent   time.Time
 	ReturnEvent time.Time
 	Status      Status
+	Code        int
 }
 
 func (o Operation) String() string {

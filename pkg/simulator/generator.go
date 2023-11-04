@@ -91,7 +91,9 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 			Param: &openapi.Value{
 				Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 			},
-			// Timeout: utils.ToPointer(timeout),
+			// ISSUE FIX -- even in curl...
+			// TODO: nil makes it set to 0, whichs makes it time out immediately
+			// Timeout: utils.ToPointer(timeout), -- being set to 0 when not included???
 		},
 	}
 }

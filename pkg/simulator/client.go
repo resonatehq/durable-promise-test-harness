@@ -1,11 +1,12 @@
 package simulator
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/openapi"
@@ -14,7 +15,7 @@ import (
 
 type Client struct {
 	ID     int
-	client openapi.ClientWithResponsesInterface
+	client openapi.ClientInterface
 }
 
 func NewClient(conn string) (*Client, error) {
@@ -28,15 +29,15 @@ func NewClient(conn string) (*Client, error) {
 	}, nil
 }
 
-// Invoke recieves the start of an operation and returns the end of it
-func (c *Client) Invoke(op store.Operation) store.Operation {
+// Invoke receives the start of an operation and returns the end of it
+func (c *Client) Invoke(ctx context.Context, op store.Operation) store.Operation {
 	switch op.API {
 	case store.Search:
 		return c.Search(op)
 	case store.Get:
-		return c.Get(op)
+		return c.Get(ctx, op)
 	case store.Create:
-		return c.Create(op)
+		return c.Create(ctx, op)
 	case store.Cancel:
 		return c.Cancel(op)
 	case store.Resolve:
@@ -48,11 +49,6 @@ func (c *Client) Invoke(op store.Operation) store.Operation {
 	}
 }
 
-//
-// implement client for durable promise specification - write/read operations
-// nil for read operations
-//
-
 func (c *Client) Search(op store.Operation) store.Operation {
 	return store.Operation{
 		Status: store.Ok,
@@ -61,71 +57,28 @@ func (c *Client) Search(op store.Operation) store.Operation {
 	}
 }
 
-// TODO: use openapi for less boiler plate
-func (c *Client) Get(op store.Operation) store.Operation {
-	end := op
-	ctx := context.Background()
-
-	end.CallEvent = time.Now()
-	input, ok := op.Input.(string)
-	if !ok {
-		panic(ok)
+func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(string)
+		if !ok {
+			panic(ok)
+		}
+		return c.client.GetPromise(ctx, input)
 	}
 
-	resp, err := c.client.GetPromiseWithResponse(ctx, input)
-	if err != nil {
-		panic(err)
-	}
-	end.ReturnEvent = time.Now()
-
-	var out openapi.Promise
-	err = json.Unmarshal(resp.Body, &out)
-	if err != nil {
-		panic(err)
-	}
-
-	end.Output = &out
-	end.Status = store.Ok // validate before ?
-
-	return end
+	return invoke[openapi.Promise](ctx, op, call, []int{200})
 }
 
-func (c *Client) Create(op store.Operation) store.Operation {
-	end := op
-	ctx := context.Background()
-
-	end.CallEvent = time.Now()
-
-	input, ok := op.Input.(*openapi.CreatePromiseRequest)
-	if !ok {
-		panic(ok)
+func (c *Client) Create(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(*openapi.CreatePromiseRequest)
+		if !ok || input == nil {
+			panic(ok)
+		}
+		return c.client.CreatePromise(ctx, *input.Id, *input)
 	}
 
-	bs, err := json.Marshal(input)
-	if err != nil {
-		panic(err)
-	}
-	reader := bytes.NewReader(bs)
-
-	resp, err := c.client.CreatePromiseWithBodyWithResponse(ctx, *input.Id, "application/json", reader)
-	if err != nil {
-		panic(err)
-	}
-
-	end.ReturnEvent = time.Now()
-
-	// TODO: CHECK STATUS BEFORE ANYTHING
-
-	var out openapi.Promise
-	err = json.Unmarshal(resp.Body, &out)
-	if err != nil {
-		panic(err)
-	}
-
-	end.Output = &out
-	end.Status = store.Ok // validate before here ?
-
-	return end
+	return invoke[openapi.Promise](ctx, op, call, []int{200, 201})
 }
 
 func (c *Client) Cancel(op store.Operation) store.Operation {
@@ -150,4 +103,41 @@ func (c *Client) Reject(op store.Operation) store.Operation {
 		API:    store.Reject,
 		Output: "TODO",
 	}
+}
+
+func invoke[T any](ctx context.Context, op store.Operation, call func() (*http.Response, error), ok []int) store.Operation {
+	op.CallEvent = time.Now()
+
+	resp, err := call()
+	if err != nil {
+		op.ReturnEvent = time.Now()
+		return op
+	}
+
+	op.ReturnEvent = time.Now()
+
+	op.Code = resp.StatusCode
+
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return op
+	}
+
+	var out T
+	err = json.Unmarshal(b, &out)
+	if err != nil {
+		return op
+	}
+
+	op.Output = &out
+
+	op.Status = store.Fail
+	for i := range ok {
+		if ok[i] == op.Code {
+			op.Status = store.Ok
+		}
+	}
+
+	return op
 }

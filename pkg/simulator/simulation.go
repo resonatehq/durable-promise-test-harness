@@ -1,6 +1,7 @@
 package simulator
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"net"
@@ -116,11 +117,11 @@ func WithChecker(c *checker.Checker) TestOption {
 
 func (t *Test) Run() error {
 	log.Printf("running tests...\n")
-	st := store.NewStore()
-	ops := t.Generator.Generate(10)
+	st, ops := store.NewStore(), t.Generator.Generate(10000)
 
+	ctx := context.Background()
 	for _, op := range ops {
-		st.Add(t.Client.Invoke(op))
+		st.Add(t.Client.Invoke(ctx, op))
 	}
 
 	// write to file - create format:

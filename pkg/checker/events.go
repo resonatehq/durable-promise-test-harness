@@ -16,6 +16,13 @@ const (
 	returnEvent eventKind = true
 )
 
+func (e eventKind) String() string {
+	if e {
+		return "RETURN"
+	}
+	return "CALL"
+}
+
 type event struct {
 	id       int
 	clientId int
@@ -24,20 +31,22 @@ type event struct {
 	value    interface{}
 	time     time.Time
 	status   store.Status
+	code     int
 }
 
 func (e event) String() string {
 	v, _ := json.Marshal(e.value)
 
 	return fmt.Sprintf(
-		"event(id=%d, clientId=%d, kind=%v, api=%v, value=%s, time=%v, status=%v)",
+		"event(id=%d, clientId=%d, kind=%v, api=%v, value=%s, time=%v, status=%v, code=%d)",
 		e.id,
 		e.clientId,
-		e.kind,
-		e.API,
+		e.kind.String(),
+		e.API.String(),
 		string(v),
 		e.time,
 		e.status,
+		e.code,
 	)
 }
 
@@ -54,6 +63,7 @@ func makeEvents(history []store.Operation) []event {
 			value:    op.Input,
 			time:     op.CallEvent,
 			status:   op.Status,
+			code:     -1, // status code is unknown
 		})
 
 		// response
@@ -65,6 +75,7 @@ func makeEvents(history []store.Operation) []event {
 			value:    op.Output,
 			time:     op.ReturnEvent,
 			status:   op.Status,
+			code:     op.Code,
 		})
 	}
 

@@ -9,6 +9,14 @@ func ToPointer[T any](val T) *T {
 	return &v
 }
 
-func DeepCopy[T any](input T) T {
-	return deepcopy.Copy(input).(T)
+func DeepCopy[T any](val T) T {
+	return deepcopy.Copy(val).(T)
+}
+
+func SafeDereference[T any](val *T) T {
+	if val == nil {
+		var t T
+		return t
+	}
+	return *val
 }
