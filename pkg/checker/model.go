@@ -101,6 +101,8 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, fmt.Errorf("expected '%d', got '%d'", utils.SafeDereference(val.Timeout), utils.SafeDereference(respObj.Timeout))
 	}
 
+	// TODO: verify state is previous write or timeout (strict check)
+
 	return state, nil // state does not change
 }
 
@@ -131,7 +133,7 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
 	}
 
-	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
+	if resp.code != http.StatusCreated && resp.code != http.StatusOK && *respObj.State == openapi.PENDING {
 		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
 	}
 
@@ -178,7 +180,7 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 		}
 	}
 
-	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
+	if resp.code != http.StatusCreated && resp.code != http.StatusOK && isCorrectCompleteState(resp.API, *respObj.State) {
 		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
 	}
 
@@ -259,4 +261,17 @@ func isValid(stat store.Status) bool {
 
 func isTimedOut(state openapi.PromiseState) bool {
 	return state == openapi.REJECTEDTIMEDOUT
+}
+
+func isCorrectCompleteState(api store.API, state openapi.PromiseState) bool {
+	switch api {
+	case store.Resolve:
+		return state == openapi.RESOLVED
+	case store.Reject:
+		return state == openapi.REJECTED
+	case store.Cancel:
+		return state == openapi.REJECTEDCANCELED
+	default:
+		return false
+	}
 }
