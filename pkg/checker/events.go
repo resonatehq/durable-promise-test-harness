@@ -62,8 +62,8 @@ func makeEvents(history []store.Operation) []event {
 			API:      op.API,
 			value:    op.Input,
 			time:     op.CallEvent,
-			status:   op.Status,
-			code:     -1, // status code is unknown
+			status:   store.Invoke, // status is invoking
+			code:     -1,           // code is unknown
 		})
 
 		// response
