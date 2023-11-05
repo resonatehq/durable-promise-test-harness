@@ -33,17 +33,6 @@ The `Durable Promise Server` implements the core [Durable Promise Specification]
 
 ## Usage 
 
-The components work together to simulate client traffic and verify the correctness of the server implementation:
-
-1. The Simulator generates test operations
-2. Operations are executed against the Server
-3. The LocalStore captures the operation history
-4. The Checker validates the result
-
-This end-to-end approach ensures the Durable Promise API is thoroughly exercised and verified.
-
-## Running Tests 
-
 This project contains a full test suite using go:
 ```bash
 DP_SERVER=http://0.0.0.0:8001/ go test -v ./test/...  

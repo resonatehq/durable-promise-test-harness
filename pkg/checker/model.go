@@ -199,6 +199,7 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 		switch resp.code {
 		// client can only get 403 status code if the promise has already been completed.
 		case http.StatusForbidden:
+			// TODO: strict check resp object is timeout and callEvent > createOn + timeout
 			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) {
 				return state, nil
 			}
@@ -236,6 +237,7 @@ func (s State) Set(key string, val *openapi.Promise) {
 }
 
 func (s State) Get(key string) (*openapi.Promise, error) {
+	// TODO: before any read operations update state for timeouts -- client expectations
 	val, ok := s[key]
 	if !ok {
 		return nil, errors.New("promise not found")
