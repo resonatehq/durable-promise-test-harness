@@ -18,15 +18,12 @@ type GeneratorConfig struct {
 	Data int
 }
 
-// Generator is responsible for telling the test what operations to perform
-// on the implementation during the test. It outputs a sequence of operations.
 type Generator struct {
 	r       *rand.Rand
 	idSet   []string
 	dataSet [][]byte
 }
 
-// NewGenerator return a set of generate dataset used to create operations.
 func NewGenerator(config *GeneratorConfig) *Generator {
 	idSet := make([]string, config.Ids)
 	for i := 0; i < config.Ids; i++ {
@@ -35,7 +32,7 @@ func NewGenerator(config *GeneratorConfig) *Generator {
 
 	dataSet := [][]byte{}
 	for i := 0; i < config.Data; i++ {
-		dataSet = append(dataSet, []byte(strconv.Itoa(i)), nil) // half of all values are nil ???
+		dataSet = append(dataSet, []byte(strconv.Itoa(i)), nil) // half of all values are nil
 	}
 
 	return &Generator{
@@ -59,7 +56,6 @@ func (g *Generator) Generate(n int) []store.Operation {
 		g.GenerateRejectPromise,
 	}
 
-	// TODO: make generator more interesting and more likely to pick from the created promises...?
 	for i := 0; i < n; i++ {
 		bound := len(generators)
 		ops = append(ops, generators[g.r.Intn(bound)](g.r, clientId))
@@ -104,8 +100,6 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 			Param: &openapi.Value{
 				Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 			},
-			// ISSUE FIX -- even in curl...
-			// TODO: nil makes it set to 0, whichs makes it time out immediately
 			Timeout: utils.ToPointer(2524608000000),
 		},
 	}

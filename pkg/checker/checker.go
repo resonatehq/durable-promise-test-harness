@@ -32,7 +32,6 @@ func checkEvents(model *DurablePromiseModel, events []event) error {
 	for {
 		in, out, next := eventIter.Next()
 		if !next {
-			fmt.Println(state.String()) // printttt (move to file)
 			break
 		}
 

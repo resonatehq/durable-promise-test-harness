@@ -45,7 +45,7 @@ func (e event) String() string {
 		e.API.String(),
 		string(v),
 		e.time,
-		e.status,
+		e.status.String(),
 		e.code,
 	)
 }

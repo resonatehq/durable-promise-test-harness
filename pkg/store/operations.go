@@ -13,6 +13,19 @@ const (
 	Fail
 )
 
+func (s Status) String() string {
+	switch s {
+	case Invoke:
+		return "INVOKE"
+	case Ok:
+		return "OK"
+	case Fail:
+		return "FAIL"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 type API int
 
 const (

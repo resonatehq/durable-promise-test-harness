@@ -18,5 +18,5 @@ func TestMain(t *testing.T) {
 		Addr: addr,
 	}
 
-	suite.Run(t, simulator.New(config))
+	suite.Run(t, simulator.NewSimulation(config))
 }

@@ -14,15 +14,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// Simulation is a client
 type Simulation struct {
 	suite.Suite
 
 	config *SimulationConfig
 }
 
-func New(config *SimulationConfig) *Simulation {
-	// TODO: parse + validate
+func NewSimulation(config *SimulationConfig) *Simulation {
 	return &Simulation{
 		config: config,
 	}
@@ -38,7 +36,7 @@ func (s *Simulation) SetupSuite() {
 			break
 		}
 
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	if !ready {
@@ -46,10 +44,7 @@ func (s *Simulation) SetupSuite() {
 	}
 }
 
-func (s *Simulation) TearDownSuite() {
-	// TODO: clean up resonate.db so doesn't affect stuff
-	// TODO: delete everything created, leave server in original state
-}
+func (s *Simulation) TearDownSuite() {}
 
 func (s *Simulation) TestSingleClientCorrectness() {
 	defer func() {
@@ -104,12 +99,11 @@ func NewTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) *
 
 func (t *TestCase) Run() error {
 	defer func() {
-		hist := t.Store.History()
-		t.Checker.Visualize(hist)
+		t.Checker.Visualize(t.Store.History())
 	}()
 
 	ctx := context.Background()
-	ops := t.Generator.Generate(10)
+	ops := t.Generator.Generate(.1 * 1000)
 	for _, op := range ops {
 		t.Store.Add(t.Client.Invoke(ctx, op))
 	}
@@ -118,7 +112,6 @@ func (t *TestCase) Run() error {
 }
 
 func IsReady(Addr string) bool {
-	// TODO: Addr define the format -- options -- remote local etc, tcp though
 	serverAddr := strings.TrimSuffix(strings.TrimPrefix(Addr, "http://"), "/")
 	conn, err := net.DialTimeout("tcp", serverAddr, 1*time.Second)
 	if err != nil {

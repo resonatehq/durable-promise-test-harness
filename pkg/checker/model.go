@@ -47,8 +47,6 @@ type StepVerifier interface {
 	Verify(st State, in event, out event) (State, error)
 }
 
-// possible outcomes:
-// give me or not -- are all promise given, found locally and no more
 type SearchPromiseVerifier struct{}
 
 func newSearchPromiseVerifier() *SearchPromiseVerifier {
@@ -59,11 +57,6 @@ func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, err
 	return state, nil
 }
 
-// possible outcomes:
-// [ invoke, ok, fail ]
-// 1. get a promise that exists and it is correct one - 200
-// 2. get a promise that exists and it is not the correct one - 200, check here its correct
-// 3. get a promise that does not exist and get error (returns nil) -- fix create issue -- 404
 type GetPromiseVerifier struct{}
 
 func newGetPromiseVerifier() *GetPromiseVerifier {
@@ -108,20 +101,9 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, fmt.Errorf("expected '%d', got '%d'", utils.SafeDereference(val.Timeout), utils.SafeDereference(respObj.Timeout))
 	}
 
-	// TODO: validate promise STATE, what can it be, this has a few options
-	// if no reject or resolve were created than should be, PENDING or TIMEDOUt ?
-	// once completed it can't be change so others only affect once if not PENDING
-
 	return state, nil // state does not change
 }
 
-// possible outcomes:
-// [ invoke, ok, fail ]
-// [ ok ]
-// 1. create a promise that does not exist, success - 201
-// 2. create a promise that does exist w/ idempotency key, success (first gets 201, then 200 -- should be the same though, no? - for put in both  -- if not documented for sure)
-// [ fail ]
-// 1. create a promise that does exist NO Idempotency, error ( returns, object (weird fix) but bad status code ) -- 403, should be 409 [ fix ]
 type CreatePromiseVerifier struct{}
 
 func newCreatePromiseVerifier() *CreatePromiseVerifier {
@@ -143,26 +125,15 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	}
 
 	if resp.status == store.Fail {
-		// the client correctly got a forbidden status code since the promise
-		// already had been created by the client.
 		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id) {
 			return state, nil
 		}
-
-		// failed even though promise doesn't exist and/or got unexpected status code
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
 	}
 
-	// TODO: be strict that if it is 200 it must have an idempotency key
 	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
 		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
 	}
-
-	// validate promise state, only PENDING ?? -- idempotency key ??? might me something else
-	// separate those two ??
-	// if !reflect.DeepEqual() {
-	// 	return state, fmt.Errorf("got ")
-	// }
 
 	newState := utils.DeepCopy(state)
 	newState.Set(*respObj.Id, respObj)
@@ -170,11 +141,6 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	return newState, nil
 }
 
-// possible outcomes:
-// if completed [ resolve, rejected, or canceled ] don't update state
-// 200, 201: PENDING -> only
-// 403: all other state transitions failure: REJECTED_TIMEDOUT -> , CANCELED ->,  RESOLVED ->, REJECTED ->
-// 404: if it doesn't exist ->
 type CompletePromiseVerifier struct{}
 
 func newCompletePromiseVerifier() *CompletePromiseVerifier {
@@ -197,14 +163,11 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 
 	if resp.status == store.Fail {
 		switch resp.code {
-		// client can only get 403 status code if the promise has already been completed.
 		case http.StatusForbidden:
-			// TODO: strict check resp object is timeout and callEvent > createOn + timeout
 			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
-		// client can only get 404 status code if the promise has not been created.
 		case http.StatusNotFound:
 			if !state.Exists(*reqObj.Id) {
 				return state, nil
@@ -215,16 +178,12 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 		}
 	}
 
-	// ok
-	// TODO: be strict that if it is 200 it must have an idempotency key
 	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
 		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
 	}
 
 	newState := utils.DeepCopy(state)
 	newState.Set(*respObj.Id, respObj)
-
-	// TODO: how to update the state if REJECTED_TIMEOUT, make exception in get and completed??
 
 	return newState, nil
 }
@@ -237,7 +196,6 @@ func (s State) Set(key string, val *openapi.Promise) {
 }
 
 func (s State) Get(key string) (*openapi.Promise, error) {
-	// TODO: before any read operations update state for timeouts -- client expectations
 	val, ok := s[key]
 	if !ok {
 		return nil, errors.New("promise not found")
@@ -251,8 +209,6 @@ func (s State) Exists(key string) bool {
 	return ok
 }
 
-// TODO: REJECTED_TIMEDOUT -- IS IMPLICIT from the server have to calculate that ---???? -- or check
-// request object
 func (s State) Completed(key string) bool {
 	val, ok := s[key]
 	if !ok {
@@ -262,7 +218,6 @@ func (s State) Completed(key string) bool {
 	if val.State == nil {
 		panic("got nil promise state")
 	}
-	// timeout is implicit need to manually check for it.
 
 	switch *val.State {
 	case openapi.RESOLVED, openapi.REJECTED, openapi.REJECTEDCANCELED, openapi.REJECTEDTIMEDOUT:
