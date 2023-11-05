@@ -30,7 +30,7 @@ In Harness, tests are called "simulations". A simulation is controlled by a prog
 
 6. Harness uses a *checker* to analyze the test's history for correctnes and to generate benchkmark reports & timeline graphs. 
 
-NOTE: the test, history, analysis, and any supplementary results are written to the filesystem under store/<test-name>/<date> for later review. Symlinks to the latest results are maintained at each level for convenience. 
+NOTE: the history, analysis, and any supplementary results are written to the filesystem under test/store/<test-name>/<date> for later review.
 
 ## Contributions
 

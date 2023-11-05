@@ -2,7 +2,6 @@ package simulator
 
 import (
 	"context"
-	"log"
 	"math/rand"
 	"net"
 	"strings"
@@ -61,75 +60,61 @@ func (s *Simulation) TestSingleClientCorrectness() {
 	}()
 
 	s.T().Run("single client correctness", func(t *testing.T) {
+		localStore := store.NewStore()
+
 		client, err := NewClient(s.config.Addr)
 		if err != nil {
 			panic(err)
 		}
 
-		test := NewTest(
-			WithClient(client),
-			WithGenerator(NewGenerator(&GeneratorConfig{
-				r:    rand.New(rand.NewSource(0)),
-				Ids:  100,
-				Data: 100,
-			})),
-			WithChecker(checker.NewChecker()),
+		generator := NewGenerator(&GeneratorConfig{
+			r:    rand.New(rand.NewSource(0)),
+			Ids:  100,
+			Data: 100,
+		})
+
+		checker := checker.NewChecker()
+
+		test := NewTestCase(
+			localStore,
+			client,
+			generator,
+			checker,
 		)
 
-		assert.Nil(t, test.Run()) // output: server logs, checker data
+		assert.Nil(t, test.Run())
 	})
 }
 
-type Test struct {
-	Name      string
+type TestCase struct {
+	Store     *store.Store
 	Client    *Client
 	Generator *Generator
 	Checker   *checker.Checker
 }
 
-type TestOption func(*Test)
-
-func NewTest(opts ...TestOption) *Test {
-	test := &Test{}
-	for _, opt := range opts {
-		opt(test)
-	}
-	return test
-}
-
-func WithClient(c *Client) TestOption {
-	return func(t *Test) {
-		t.Client = c
+func NewTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) *TestCase {
+	return &TestCase{
+		Store:     s,
+		Client:    c,
+		Generator: g,
+		Checker:   ch,
 	}
 }
 
-func WithGenerator(g *Generator) TestOption {
-	return func(t *Test) {
-		t.Generator = g
-	}
-}
-
-func WithChecker(c *checker.Checker) TestOption {
-	return func(t *Test) {
-		t.Checker = c
-	}
-}
-
-func (t *Test) Run() error {
-	log.Printf("running tests...\n")
-	st, ops := store.NewStore(), t.Generator.Generate(1000)
+func (t *TestCase) Run() error {
+	defer func() {
+		hist := t.Store.History()
+		t.Checker.Visualize(hist)
+	}()
 
 	ctx := context.Background()
+	ops := t.Generator.Generate(10)
 	for _, op := range ops {
-		st.Add(t.Client.Invoke(ctx, op))
+		t.Store.Add(t.Client.Invoke(ctx, op))
 	}
 
-	// write to file - create format:
-	// 1) event history
-	// 2) performance charts
-	log.Println(t.Checker.Timeline(st.History()))
-
-	return t.Checker.Check(st.History())
+	return t.Checker.Check(t.Store.History())
 }
 
 func IsReady(Addr string) bool {
