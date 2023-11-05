@@ -38,7 +38,7 @@ This project contains a full test suite using go:
 DP_SERVER=http://0.0.0.0:8001/ go test -v -timeout 45m ./test/...  
 ```
 
-NOTE: the history, analysis, and any supplementary results are written to the filesystem under test/results/<test-name>/<date> for later review.
+NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<test-name>/<date>` for later review.
 
 ## Contributions
 
