@@ -5,7 +5,7 @@ This test harness is a verification system that checks implementations for confo
 ## Architecture
 
 <p align="center">
-    <img height="300"src="./docs/img/architecture.png">
+    <img src="./docs/img/architecture.png">
 </p>
 
 The test harness is composed of four key components working together: 
