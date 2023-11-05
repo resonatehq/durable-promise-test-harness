@@ -33,28 +33,32 @@ func NewClient(conn string) (*Client, error) {
 func (c *Client) Invoke(ctx context.Context, op store.Operation) store.Operation {
 	switch op.API {
 	case store.Search:
-		return c.Search(op)
+		return c.Search(ctx, op)
 	case store.Get:
 		return c.Get(ctx, op)
 	case store.Create:
 		return c.Create(ctx, op)
 	case store.Cancel:
-		return c.Cancel(op)
+		return c.Cancel(ctx, op)
 	case store.Resolve:
-		return c.Resolve(op)
+		return c.Resolve(ctx, op)
 	case store.Reject:
-		return c.Reject(op)
+		return c.Reject(ctx, op)
 	default:
 		panic(fmt.Sprintf("unknown operation: %d", op.API))
 	}
 }
 
-func (c *Client) Search(op store.Operation) store.Operation {
-	return store.Operation{
-		Status: store.Ok,
-		API:    store.Search,
-		Output: "TODO",
+func (c *Client) Search(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(*openapi.SearchPromisesParams)
+		if !ok {
+			panic(ok)
+		}
+		return c.client.SearchPromises(ctx, input)
 	}
+
+	return invoke[[]openapi.Promise](ctx, op, call, []int{200})
 }
 
 func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {
@@ -72,37 +76,52 @@ func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {
 func (c *Client) Create(ctx context.Context, op store.Operation) store.Operation {
 	call := func() (*http.Response, error) {
 		input, ok := op.Input.(*openapi.CreatePromiseRequest)
-		if !ok || input == nil {
+		if !ok || input == nil || input.Id == nil {
 			panic(ok)
 		}
 		return c.client.CreatePromise(ctx, *input.Id, *input)
 	}
 
-	return invoke[openapi.Promise](ctx, op, call, []int{200, 201})
+	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
 }
 
-func (c *Client) Cancel(op store.Operation) store.Operation {
-	return store.Operation{
-		Status: store.Invoke,
-		API:    store.Cancel,
-		Output: "TODO",
+func (c *Client) Cancel(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(*openapi.CancelPromiseRequest)
+		if !ok {
+			panic(ok)
+		}
+		// qq: is value arbitrary, why no id??
+		return c.client.CancelPromise(ctx, "id", *input)
 	}
+
+	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
 }
 
-func (c *Client) Resolve(op store.Operation) store.Operation {
-	return store.Operation{
-		Status: store.Invoke,
-		API:    store.Resolve,
-		Output: "TODO",
+func (c *Client) Resolve(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(*openapi.ResolvePromiseRequest)
+		if !ok {
+			panic(ok)
+		}
+		// qq: is value arbitrary, why no id??
+		return c.client.ResolvePromise(ctx, "id", *input)
 	}
+
+	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
 }
 
-func (c *Client) Reject(op store.Operation) store.Operation {
-	return store.Operation{
-		Status: store.Invoke,
-		API:    store.Reject,
-		Output: "TODO",
+func (c *Client) Reject(ctx context.Context, op store.Operation) store.Operation {
+	call := func() (*http.Response, error) {
+		input, ok := op.Input.(*openapi.RejectPromiseRequest)
+		if !ok {
+			panic(ok)
+		}
+		// qq: is value arbitraty, why no id??
+		return c.client.RejectPromise(ctx, "id", *input)
 	}
+
+	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
 }
 
 func invoke[T any](ctx context.Context, op store.Operation, call func() (*http.Response, error), ok []int) store.Operation {

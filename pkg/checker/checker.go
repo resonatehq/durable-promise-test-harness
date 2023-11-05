@@ -11,6 +11,7 @@ type Checker struct {
 	visualizer
 }
 
+// Creates a new Checker with reasonable defaults.
 func NewChecker() *Checker {
 	return &Checker{
 		visualizer: newVisualizer(),
@@ -19,25 +20,25 @@ func NewChecker() *Checker {
 
 // Check verifies the history is linearizable (for correctness).
 func (c *Checker) Check(history []store.Operation) error {
-	events := makeEvents(history)
-	model := NewDurablePromiseModel()
+	model, events := newDurablePromiseModel(), makeEvents(history)
 	return checkEvents(model, events)
 }
 
+// checkEvents is loop that actually goes through all the steps.
 func checkEvents(model *DurablePromiseModel, events []event) error {
 	state := model.Init()
-	eventIter := NewEventIterator(events)
+	eventIter := newEventIterator(events)
 
 	for {
 		in, out, next := eventIter.Next()
 		if !next {
+			fmt.Println(state.String()) // printttt (move to file)
 			break
 		}
 
-		// TODO: show state -> newState, operation etc. better understandability when something fails
 		newState, err := model.Step(state, in, out)
 		if err != nil {
-			return fmt.Errorf("error: received bad operation: input=%s output=%s: %v", in.String(), out.String(), err)
+			return fmt.Errorf("bad op: %v: in=%s out=%s from %s", err, in.String(), out.String(), state.String())
 		}
 
 		state = newState

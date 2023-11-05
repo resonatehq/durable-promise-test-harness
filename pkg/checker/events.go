@@ -107,7 +107,7 @@ type eventIterator struct {
 	events []event
 }
 
-func NewEventIterator(events []event) *eventIterator {
+func newEventIterator(events []event) *eventIterator {
 	return &eventIterator{index: 0, events: events}
 }
 

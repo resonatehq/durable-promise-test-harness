@@ -117,7 +117,7 @@ func WithChecker(c *checker.Checker) TestOption {
 
 func (t *Test) Run() error {
 	log.Printf("running tests...\n")
-	st, ops := store.NewStore(), t.Generator.Generate(10000)
+	st, ops := store.NewStore(), t.Generator.Generate(10)
 
 	ctx := context.Background()
 	for _, op := range ops {

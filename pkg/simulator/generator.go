@@ -51,13 +51,16 @@ func (g *Generator) Generate(n int) []store.Operation {
 	clientId := int(uuid.New().ID())
 
 	generators := []OpGenerator{
+		// g.GenerateSearchPromise,
 		g.GenerateReadPromise,
 		g.GenerateCreatePromise,
+		// g.GenerateCancelPromise,
+		// g.GenerateResolvePromise,
+		// g.GenerateRejectPromise,
 	}
 
 	for i := 0; i < n; i++ {
 		bound := len(generators)
-
 		ops = append(ops, generators[g.r.Intn(bound)](g.r, clientId))
 	}
 
@@ -65,6 +68,15 @@ func (g *Generator) Generate(n int) []store.Operation {
 }
 
 type OpGenerator func(*rand.Rand, int) store.Operation
+
+func (g *Generator) GenerateSearchPromise(r *rand.Rand, clientID int) store.Operation {
+	return store.Operation{
+		ID:       int(uuid.New().ID()),
+		ClientID: clientID,
+		API:      store.Search,
+		Input:    &openapi.SearchPromisesParams{},
+	}
+}
 
 func (g *Generator) GenerateReadPromise(r *rand.Rand, clientID int) store.Operation {
 	promiseId := g.idSet[r.Intn(len(g.idSet))]
@@ -95,5 +107,32 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 			// TODO: nil makes it set to 0, whichs makes it time out immediately
 			// Timeout: utils.ToPointer(timeout), -- being set to 0 when not included???
 		},
+	}
+}
+
+func (g *Generator) GenerateCancelPromise(r *rand.Rand, clientID int) store.Operation {
+	return store.Operation{
+		ID:       int(uuid.New().ID()),
+		ClientID: clientID,
+		API:      store.Cancel,
+		Input:    &openapi.CancelPromiseRequest{},
+	}
+}
+
+func (g *Generator) GenerateResolvePromise(r *rand.Rand, clientID int) store.Operation {
+	return store.Operation{
+		ID:       int(uuid.New().ID()),
+		ClientID: clientID,
+		API:      store.Resolve,
+		Input:    &openapi.ResolvePromiseRequest{},
+	}
+}
+
+func (g *Generator) GenerateRejectPromise(r *rand.Rand, clientID int) store.Operation {
+	return store.Operation{
+		ID:       int(uuid.New().ID()),
+		ClientID: clientID,
+		API:      store.Reject,
+		Input:    &openapi.RejectPromiseRequest{},
 	}
 }
