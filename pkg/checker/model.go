@@ -24,9 +24,9 @@ func newDurablePromiseModel() *DurablePromiseModel {
 			store.Search:  newSearchPromiseVerifier(),
 			store.Get:     newGetPromiseVerifier(),
 			store.Create:  newCreatePromiseVerifier(),
-			store.Cancel:  newCancelPromiseVerifier(),
-			store.Resolve: newResolvePromiseVerifier(),
-			store.Reject:  newRejectPromiseVerifier(),
+			store.Cancel:  newCompletePromiseVerifier(),
+			store.Resolve: newCompletePromiseVerifier(),
+			store.Reject:  newCompletePromiseVerifier(),
 		},
 	}
 }
@@ -71,7 +71,7 @@ func newGetPromiseVerifier() *GetPromiseVerifier {
 }
 
 func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isCompleted(resp.status) {
+	if !isValid(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -129,7 +129,7 @@ func newCreatePromiseVerifier() *CreatePromiseVerifier {
 }
 
 func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isCompleted(resp.status) {
+	if !isValid(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -172,37 +172,57 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 
 // possible outcomes:
 // if completed [ resolve, rejected, or canceled ] don't update state
-type CancelPromiseVerifier struct{}
+// 200, 201: PENDING -> only
+// 403: all other state transitions failure: REJECTED_TIMEDOUT -> , CANCELED ->,  RESOLVED ->, REJECTED ->
+// 404: if it doesn't exist ->
+type CompletePromiseVerifier struct{}
 
-func newCancelPromiseVerifier() *CancelPromiseVerifier {
-	return &CancelPromiseVerifier{}
+func newCompletePromiseVerifier() *CompletePromiseVerifier {
+	return &CompletePromiseVerifier{}
 }
 
-func (v *CancelPromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	return state, nil
-}
+func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, error) {
+	if !isValid(resp.status) {
+		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
+	}
 
-// possible outcomes:
-// if completed [ resolve, rejected, or canceled ] don't update state
-type ResolvePromiseVerifier struct{}
+	reqObj, ok := req.value.(*openapi.CompletePromiseRequestWrapper)
+	if !ok {
+		return state, errors.New("req.Value not of type *simulator.CompletePromiseRequestWrapper")
+	}
+	respObj, ok := resp.value.(*openapi.Promise)
+	if !ok {
+		return state, errors.New("resp.Value not of type *openapi.Promise")
+	}
 
-func newResolvePromiseVerifier() *ResolvePromiseVerifier {
-	return &ResolvePromiseVerifier{}
-}
+	if resp.status == store.Fail {
+		switch resp.code {
+		// client can only get 403 status code if the promise has already been completed.
+		case http.StatusForbidden:
+			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) {
+				return state, nil
+			}
+			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
+		// client can only get 404 status code if the promise has not been created.
+		case http.StatusNotFound:
+			if !state.Exists(*reqObj.Id) {
+				return state, nil
+			}
+			return state, fmt.Errorf("got an unexpected 404 status code: promise exists")
+		default:
+			return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
+		}
+	}
 
-func (v *ResolvePromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	return state, nil
-}
+	// ok
+	// TODO: be strict that if it is 200 it must have an idempotency key
+	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
+		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
+	}
 
-// possible outcomes:
-// if completed [ resolve, rejected, or canceled ] don't update state
-type RejectPromiseVerifier struct{}
+	newState := utils.DeepCopy(state)
+	newState.Set(*respObj.Id, respObj)
 
-func newRejectPromiseVerifier() *RejectPromiseVerifier {
-	return &RejectPromiseVerifier{}
-}
-
-func (v *RejectPromiseVerifier) Verify(state State, req, resp event) (State, error) {
 	return state, nil
 }
 
@@ -225,6 +245,27 @@ func (s State) Get(key string) (*openapi.Promise, error) {
 func (s State) Exists(key string) bool {
 	_, ok := s[key]
 	return ok
+}
+
+// TODO: REJECTED_TIMEDOUT -- IS IMPLICIT from the server have to calculate that ---???? -- or check
+// request object
+func (s State) Completed(key string) bool {
+	val, ok := s[key]
+	if !ok {
+		return false
+	}
+
+	if val.State == nil {
+		panic("got nil promise state")
+	}
+	// timeout is implicit need to manually check for it.
+
+	switch *val.State {
+	case openapi.RESOLVED, openapi.REJECTED, openapi.REJECTEDCANCELED, openapi.REJECTEDTIMEDOUT:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s State) String() string {
@@ -253,6 +294,10 @@ func (s State) String() string {
 // utils
 //
 
-func isCompleted(stat store.Status) bool {
+func isValid(stat store.Status) bool {
 	return stat == store.Ok || stat == store.Fail
+}
+
+func isTimedOut(state openapi.PromiseState) bool {
+	return state == openapi.REJECTEDTIMEDOUT
 }

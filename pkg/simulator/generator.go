@@ -54,11 +54,12 @@ func (g *Generator) Generate(n int) []store.Operation {
 		// g.GenerateSearchPromise,
 		g.GenerateReadPromise,
 		g.GenerateCreatePromise,
-		// g.GenerateCancelPromise,
-		// g.GenerateResolvePromise,
-		// g.GenerateRejectPromise,
+		g.GenerateCancelPromise,
+		g.GenerateResolvePromise,
+		g.GenerateRejectPromise,
 	}
 
+	// TODO: make generator more interesting and more likely to pick from the created promises...?
 	for i := 0; i < n; i++ {
 		bound := len(generators)
 		ops = append(ops, generators[g.r.Intn(bound)](g.r, clientId))
@@ -111,28 +112,58 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 }
 
 func (g *Generator) GenerateCancelPromise(r *rand.Rand, clientID int) store.Operation {
+	promiseId := g.idSet[r.Intn(len(g.idSet))]
+	data := g.dataSet[r.Intn(len(g.dataSet))]
+
 	return store.Operation{
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Cancel,
-		Input:    &openapi.CancelPromiseRequest{},
+		Input: &openapi.CompletePromiseRequestWrapper{
+			Id: utils.ToPointer(promiseId),
+			Request: &openapi.CancelPromiseRequest{
+				Value: &openapi.Value{
+					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
+				},
+			},
+		},
 	}
 }
 
 func (g *Generator) GenerateResolvePromise(r *rand.Rand, clientID int) store.Operation {
+	promiseId := g.idSet[r.Intn(len(g.idSet))]
+	data := g.dataSet[r.Intn(len(g.dataSet))]
+
 	return store.Operation{
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Resolve,
-		Input:    &openapi.ResolvePromiseRequest{},
+		Input: &openapi.CompletePromiseRequestWrapper{
+			Id: utils.ToPointer(promiseId),
+			Request: &openapi.ResolvePromiseRequest{
+				Value: &openapi.Value{
+					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
+				},
+			},
+		},
 	}
 }
 
 func (g *Generator) GenerateRejectPromise(r *rand.Rand, clientID int) store.Operation {
+	promiseId := g.idSet[r.Intn(len(g.idSet))]
+	data := g.dataSet[r.Intn(len(g.dataSet))]
+
 	return store.Operation{
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Reject,
-		Input:    &openapi.RejectPromiseRequest{},
+		Input: &openapi.CompletePromiseRequestWrapper{
+			Id: utils.ToPointer(promiseId),
+			Request: &openapi.RejectPromiseRequest{
+				Value: &openapi.Value{
+					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
+				},
+			},
+		},
 	}
 }

@@ -87,12 +87,15 @@ func (c *Client) Create(ctx context.Context, op store.Operation) store.Operation
 
 func (c *Client) Cancel(ctx context.Context, op store.Operation) store.Operation {
 	call := func() (*http.Response, error) {
-		input, ok := op.Input.(*openapi.CancelPromiseRequest)
+		input, ok := op.Input.(*openapi.CompletePromiseRequestWrapper)
 		if !ok {
 			panic(ok)
 		}
-		// qq: is value arbitrary, why no id??
-		return c.client.CancelPromise(ctx, "id", *input)
+		body, ok := input.Request.(*openapi.CancelPromiseRequest)
+		if !ok || body == nil {
+			panic(ok)
+		}
+		return c.client.CancelPromise(ctx, *input.Id, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -100,12 +103,15 @@ func (c *Client) Cancel(ctx context.Context, op store.Operation) store.Operation
 
 func (c *Client) Resolve(ctx context.Context, op store.Operation) store.Operation {
 	call := func() (*http.Response, error) {
-		input, ok := op.Input.(*openapi.ResolvePromiseRequest)
+		input, ok := op.Input.(*openapi.CompletePromiseRequestWrapper)
 		if !ok {
 			panic(ok)
 		}
-		// qq: is value arbitrary, why no id??
-		return c.client.ResolvePromise(ctx, "id", *input)
+		body, ok := input.Request.(*openapi.ResolvePromiseRequest)
+		if !ok || body == nil {
+			panic(ok)
+		}
+		return c.client.ResolvePromise(ctx, *input.Id, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -113,12 +119,15 @@ func (c *Client) Resolve(ctx context.Context, op store.Operation) store.Operatio
 
 func (c *Client) Reject(ctx context.Context, op store.Operation) store.Operation {
 	call := func() (*http.Response, error) {
-		input, ok := op.Input.(*openapi.RejectPromiseRequest)
+		input, ok := op.Input.(*openapi.CompletePromiseRequestWrapper)
 		if !ok {
 			panic(ok)
 		}
-		// qq: is value arbitraty, why no id??
-		return c.client.RejectPromise(ctx, "id", *input)
+		body, ok := input.Request.(*openapi.RejectPromiseRequest)
+		if !ok || body == nil {
+			panic(ok)
+		}
+		return c.client.RejectPromise(ctx, *input.Id, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -155,6 +164,7 @@ func invoke[T any](ctx context.Context, op store.Operation, call func() (*http.R
 	for i := range ok {
 		if ok[i] == op.Code {
 			op.Status = store.Ok
+			break
 		}
 	}
 
