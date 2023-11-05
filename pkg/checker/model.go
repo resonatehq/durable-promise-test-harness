@@ -223,7 +223,9 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	newState := utils.DeepCopy(state)
 	newState.Set(*respObj.Id, respObj)
 
-	return state, nil
+	// TODO: how to update the state if REJECTED_TIMEOUT, make exception in get and completed??
+
+	return newState, nil
 }
 
 // State holds the expectation of the client

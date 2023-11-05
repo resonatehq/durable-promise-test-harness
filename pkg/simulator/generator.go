@@ -106,7 +106,7 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 			},
 			// ISSUE FIX -- even in curl...
 			// TODO: nil makes it set to 0, whichs makes it time out immediately
-			// Timeout: utils.ToPointer(timeout), -- being set to 0 when not included???
+			Timeout: utils.ToPointer(2524608000000),
 		},
 	}
 }
