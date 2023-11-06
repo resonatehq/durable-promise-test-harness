@@ -48,7 +48,7 @@ func (g *Generator) Generate(n int) []store.Operation {
 	clientId := int(uuid.New().ID())
 
 	generators := []OpGenerator{
-		// g.GenerateSearchPromise,
+		g.GenerateSearchPromise,
 		g.GenerateReadPromise,
 		g.GenerateCreatePromise,
 		g.GenerateCancelPromise,
@@ -67,11 +67,28 @@ func (g *Generator) Generate(n int) []store.Operation {
 type OpGenerator func(*rand.Rand, int) store.Operation
 
 func (g *Generator) GenerateSearchPromise(r *rand.Rand, clientID int) store.Operation {
+	// state must be one of: pending, resolved, rejected
+	var state string
+	switch r.Intn(3) {
+	case 0:
+		state = string(openapi.PENDING)
+	case 1:
+		state = string(openapi.RESOLVED)
+	case 2:
+		// rejected gets the timeout and canceled promises too
+		state = string(openapi.REJECTED)
+	}
+
 	return store.Operation{
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Search,
-		Input:    &openapi.SearchPromisesParams{},
+		Input: &openapi.SearchPromisesParams{
+			Q:     "*",
+			State: utils.ToPointer(state),
+			// Limit: utils.ToPointer(),
+			// Cursor: utils.ToPointer(),
+		},
 	}
 }
 

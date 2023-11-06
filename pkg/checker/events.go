@@ -38,7 +38,7 @@ func (e event) String() string {
 	v, _ := json.Marshal(e.value)
 
 	return fmt.Sprintf(
-		"event(id=%d, clientId=%d, kind=%v, api=%v, value=%s, time=%v, status=%v, code=%d)",
+		"Event(id=%d, clientId=%d, kind=%v, api=%v, value=%s, time=%v, status=%v, code=%d)",
 		e.id,
 		e.clientId,
 		e.kind.String(),

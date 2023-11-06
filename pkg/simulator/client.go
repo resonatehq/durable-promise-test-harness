@@ -58,7 +58,7 @@ func (c *Client) Search(ctx context.Context, op store.Operation) store.Operation
 		return c.client.SearchPromises(ctx, input)
 	}
 
-	return invoke[[]openapi.Promise](ctx, op, call, []int{200})
+	return invoke[openapi.SearchPromiseResponse](ctx, op, call, []int{200})
 }
 
 func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {

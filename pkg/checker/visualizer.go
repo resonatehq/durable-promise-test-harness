@@ -19,7 +19,7 @@ func newVisualizer() visualizer {
 
 // renders timeline of history and performance analysis
 func (v *visualizer) Visualize(history []store.Operation) error {
-	content := v.timeline(history) + "\n" + v.performance(history)
+	content := v.performance(history) + "\n" + v.timeline(history)
 	today := time.Now().Format("01-02-2006_15-04-05")
 	return utils.WriteStringToFile(content, fmt.Sprintf("results/single-client-correctness/%s", today))
 }
@@ -28,11 +28,9 @@ func (v *visualizer) timeline(history []store.Operation) string {
 	events := makeEvents(history)
 
 	build := strings.Builder{}
-	build.WriteString("EVENT HISTORY\n")
-	build.WriteString("-------------\n")
-
+	build.WriteString("Event history:\n")
 	for i := range events {
-		build.WriteString(fmt.Sprintf("(%d) %s\n", i+1, events[i].String()))
+		build.WriteString(fmt.Sprintf("  %s\n", events[i].String()))
 	}
 
 	return build.String()
@@ -46,14 +44,18 @@ func (v *visualizer) performance(history []store.Operation) string {
 	}
 
 	build := strings.Builder{}
-	build.WriteString("PERFORMANCE\n")
-	build.WriteString("-------------\n")
-	build.WriteString(fmt.Sprintf("cumulative: %v\n", cumulative(reqTimes)))
-	build.WriteString(fmt.Sprintf("avg: %v\n", average(reqTimes)))
-	build.WriteString(fmt.Sprintf("p50: %v\n", calculateLatencyP(reqTimes, 0.50)))
-	build.WriteString(fmt.Sprintf("p75: %v\n", calculateLatencyP(reqTimes, 0.75)))
-	build.WriteString(fmt.Sprintf("p95: %v\n", calculateLatencyP(reqTimes, 0.95)))
-	build.WriteString(fmt.Sprintf("p99: %v\n", calculateLatencyP(reqTimes, 0.99)))
+	build.WriteString("Summary:\n")
+	build.WriteString(fmt.Sprintf("  Total: %v\n", cumulative(reqTimes)))
+	build.WriteString(fmt.Sprintf("  Slowest: %v\n", slowest(reqTimes)))
+	build.WriteString(fmt.Sprintf("  Fastest: %v\n", fastest(reqTimes)))
+	build.WriteString(fmt.Sprintf("  Average: %v\n", average(reqTimes)))
+	build.WriteString("\n")
+
+	build.WriteString("Latency Distribution:\n")
+	build.WriteString(fmt.Sprintf("  p50: %v\n", calculateLatencyP(reqTimes, 0.50)))
+	build.WriteString(fmt.Sprintf("  p75: %v\n", calculateLatencyP(reqTimes, 0.75)))
+	build.WriteString(fmt.Sprintf("  p95: %v\n", calculateLatencyP(reqTimes, 0.95)))
+	build.WriteString(fmt.Sprintf("  p99: %v\n", calculateLatencyP(reqTimes, 0.99)))
 
 	return build.String()
 }
@@ -64,6 +66,26 @@ func cumulative(latencies []time.Duration) time.Duration {
 		total += l
 	}
 	return total
+}
+
+func slowest(latencies []time.Duration) time.Duration {
+	slow := latencies[0]
+	for _, l := range latencies {
+		if slow < l {
+			slow = l
+		}
+	}
+	return slow
+}
+
+func fastest(latencies []time.Duration) time.Duration {
+	fast := latencies[0]
+	for _, l := range latencies {
+		if fast > l {
+			fast = l
+		}
+	}
+	return fast
 }
 
 func average(latencies []time.Duration) time.Duration {

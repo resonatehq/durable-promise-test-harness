@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/openapi"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
@@ -54,7 +55,35 @@ func newSearchPromiseVerifier() *SearchPromiseVerifier {
 }
 
 func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	return state, nil
+	if !isValid(resp.status) {
+		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
+	}
+
+	reqObj, ok := req.value.(*openapi.SearchPromisesParams)
+	if !ok {
+		return state, errors.New("res.Value not of type *openapi.SearchPromiseResponse")
+	}
+	respObj, ok := resp.value.(*openapi.SearchPromiseResponse)
+	if !ok {
+		return state, errors.New("res.Value not of type *openapi.Promise")
+	}
+
+	localSearchResults, serverSearchResults := state.Search(*reqObj.State), *respObj.Promises
+
+	sort.Slice(localSearchResults, func(i, j int) bool {
+		return *localSearchResults[i].Id < *localSearchResults[j].Id
+	})
+
+	sort.Slice(serverSearchResults, func(i, j int) bool {
+		return *serverSearchResults[i].Id < *serverSearchResults[j].Id
+	})
+
+	err := deepEqualPromiseList(localSearchResults, serverSearchResults)
+	if err != nil {
+		return state, fmt.Errorf("got mistmatched promises search results: %v", err)
+	}
+
+	return state, nil // state does not change
 }
 
 type GetPromiseVerifier struct{}
@@ -77,7 +106,7 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, errors.New("res.Value not of type *openapi.Promise")
 	}
 
-	val, err := state.Get(reqObj)
+	local, err := state.Get(reqObj)
 	if err != nil {
 		if resp.status == store.Fail && resp.code == http.StatusNotFound {
 			return state, nil
@@ -91,17 +120,10 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 	if !reflect.DeepEqual(http.StatusOK, resp.code) {
 		return state, fmt.Errorf("expected '%d', got '%d'", http.StatusOK, resp.code)
 	}
-	if !reflect.DeepEqual(val.Id, respObj.Id) {
-		return state, fmt.Errorf("expected '%s', got '%s'", utils.SafeDereference(val.Id), utils.SafeDereference(respObj.Id))
+	err = deepEqualPromise(local, respObj)
+	if err != nil {
+		return state, fmt.Errorf("got incorrect promise result: %v", err)
 	}
-	if !reflect.DeepEqual(val.Param, respObj.Param) {
-		return state, fmt.Errorf("expected '%v', got '%v'", utils.SafeDereference(val.Param), utils.SafeDereference(respObj.Param))
-	}
-	if !reflect.DeepEqual(val.Timeout, respObj.Timeout) {
-		return state, fmt.Errorf("expected '%d', got '%d'", utils.SafeDereference(val.Timeout), utils.SafeDereference(respObj.Timeout))
-	}
-
-	// TODO: verify state is previous write or timeout (strict check)
 
 	return state, nil // state does not change
 }
@@ -197,23 +219,59 @@ func (s State) Set(key string, val *openapi.Promise) {
 	s[key] = val
 }
 
+func (s State) Search(stateParam string) []openapi.Promise {
+	filter := make([]openapi.Promise, 0)
+	for key, promise := range s {
+		if promise == nil && promise.State == nil {
+			continue
+		}
+		// before every read update for timeout since its implicit
+		p := s.SetImplicitTimeout(key, promise)
+		if strings.EqualFold(stateParam, string(openapi.REJECTED)) {
+			if isRejectedState(*p.State) {
+				filter = append(filter, *p)
+			}
+		}
+		if strings.EqualFold(stateParam, string(*p.State)) {
+			filter = append(filter, *p)
+		}
+	}
+	return filter
+}
+
 func (s State) Get(key string) (*openapi.Promise, error) {
 	val, ok := s[key]
 	if !ok {
 		return nil, errors.New("promise not found")
 	}
+	// before every read update for timeout since its implicit
+	return s.SetImplicitTimeout(key, val), nil
+}
 
-	return val, nil
+func (s State) SetImplicitTimeout(key string, val *openapi.Promise) *openapi.Promise {
+	var timeout int64
+	if val.Timeout == nil {
+		timeout = int64(0)
+	} else {
+		timeout = int64(*val.Timeout)
+	}
+	now := time.Now().UnixMilli()
+	if int64(timeout) < now {
+		val.State = utils.ToPointer(openapi.REJECTEDTIMEDOUT)
+		s[key] = val
+	}
+
+	return val
 }
 
 func (s State) Exists(key string) bool {
-	_, ok := s[key]
-	return ok
+	_, err := s.Get(key)
+	return err == nil
 }
 
 func (s State) Completed(key string) bool {
-	val, ok := s[key]
-	if !ok {
+	val, err := s.Get(key)
+	if err != nil {
 		return false
 	}
 
@@ -241,10 +299,11 @@ func (s State) String() string {
 	build.WriteString("STATE\n")
 	build.WriteString("-----\n")
 	for _, k := range keys {
+		promise, _ := s.Get(k)
 		build.WriteString(fmt.Sprintf(
-			"promise(Id=%v, state=%v)\n",
-			*s[k].Id,
-			*s[k].State,
+			"Promise(Id=%v, state=%v)\n",
+			*promise.Id,
+			*promise.State,
 		))
 	}
 
@@ -274,4 +333,53 @@ func isCorrectCompleteState(api store.API, state openapi.PromiseState) bool {
 	default:
 		return false
 	}
+}
+
+func isRejectedState(state openapi.PromiseState) bool {
+	switch state {
+	case openapi.REJECTED, openapi.REJECTEDCANCELED, openapi.REJECTEDTIMEDOUT:
+		return true
+	default:
+		return false
+	}
+}
+
+func deepEqualPromiseList(local, external []openapi.Promise) error {
+	if len(local) != len(external) {
+		return fmt.Errorf("expected '%v' promises, got '%v'instead", len(local), len(external))
+	}
+	for i := range local {
+		err := deepEqualPromise(&local[i], &external[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func deepEqualPromise(local, external *openapi.Promise) error {
+	// intentionally ignore createdOn and completedOn fields
+	if !reflect.DeepEqual(local.CreatedOn, external.CreatedOn) {
+		return fmt.Errorf("expected 'CreatedOn' %v, got %v", local.CreatedOn, external.CreatedOn)
+	}
+	if !reflect.DeepEqual(local.Id, external.Id) {
+		return fmt.Errorf("expected 'Id' %v, got %v", local.Id, external.Id)
+	}
+	if !reflect.DeepEqual(local.Param, external.Param) {
+		return fmt.Errorf("expected 'Param' %v, got %v", local.Param, external.Param)
+	}
+	if !reflect.DeepEqual(local.State, external.State) {
+		return fmt.Errorf("expected'State' %v, got %v", local.State, external.State)
+	}
+	// TODO: expected nil, get %map[]
+	// if !reflect.DeepEqual(local.Tags, external.Tags) {
+	// 	return fmt.Errorf("expected 'Tags' %v, got %v", local.Tags, external.Tags)
+	// }
+	if !reflect.DeepEqual(local.Timeout, external.Timeout) {
+		return fmt.Errorf("expected 'Timeout' %v, got %v", local.Timeout, external.Timeout)
+	}
+	if !reflect.DeepEqual(local.Value, external.Value) {
+		return fmt.Errorf("expected 'Value' %v, got %v", local.Value, external.Value)
+	}
+	return nil
 }
