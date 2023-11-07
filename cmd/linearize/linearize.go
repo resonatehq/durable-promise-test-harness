@@ -23,9 +23,10 @@ func NewCmd() *cobra.Command {
 				Addr:        addr,
 				NumClients:  clients,
 				NumRequests: requests,
+				Mode:        simulator.Linearizability,
 			})
 
-			if err := sim.Single(); err != nil {
+			if err := sim.Run(); err != nil {
 				panic(err)
 			}
 

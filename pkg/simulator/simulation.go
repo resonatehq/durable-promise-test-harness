@@ -3,8 +3,10 @@ package simulator
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/checker"
@@ -22,24 +24,31 @@ func NewSimulation(config *SimulationConfig) *Simulation {
 	}
 }
 
-func (s *Simulation) Load() error {
-	return nil
-}
-
-func (s *Simulation) Multiple() error {
-	return nil
-}
-
-func (s *Simulation) Single() error {
-	if err := s.setupSuite(); err != nil {
-		return err
+func (s *Simulation) Run() error {
+	if err := s.SetupSuite(); err != nil {
+		return fmt.Errorf("error setting up suite: %v", err)
 	}
 
-	return s.testSingleClientCorrectness()
+	var err error
+	switch s.config.Mode {
+	case Load:
+		err = s.TestLoad()
+	case Linearizability:
+		err = s.TestLinearizability()
+	default:
+		return errors.New("received unknown mode")
+	}
+
+	if err := s.TearDownSuite(); err != nil {
+		return fmt.Errorf("error tearing down suite: %v", err)
+	}
+
+	return err
 }
 
-func (s *Simulation) setupSuite() error {
+func (s *Simulation) SetupSuite() error {
 	log.Printf("testing server readiness at %s\n", s.config.Addr)
+
 	var ready bool
 	for i := 0; i < 10; i++ {
 		if utils.IsReady(s.config.Addr) {
@@ -53,17 +62,57 @@ func (s *Simulation) setupSuite() error {
 	if !ready {
 		return errors.New("server did not become ready in time")
 	}
+
 	return nil
 }
 
-func (s *Simulation) tearDownSuite() error {
+func (s *Simulation) TearDownSuite() error {
 	return nil
 }
 
-func (s *Simulation) testSingleClientCorrectness() error {
+func (s *Simulation) TestLoad() error {
 	defer func() {
 		if r := recover(); r != nil {
-			s.tearDownSuite()
+			s.TearDownSuite()
+			panic(r)
+		}
+	}()
+
+	localStore := store.NewStore()
+
+	clients := make([]*Client, 0)
+	for i := 0; i < s.config.NumClients; i++ {
+		client, err := NewClient(s.config.Addr)
+		if err != nil {
+			return err
+		}
+		clients = append(clients, client)
+	}
+
+	generator := NewGenerator(&GeneratorConfig{
+		r:           rand.New(rand.NewSource(0)),
+		numRequests: s.config.NumRequests,
+		Ids:         100,
+		Data:        100,
+	})
+
+	test := NewLoadTestCase(
+		localStore,
+		clients,
+		generator,
+	)
+
+	if err := test.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Simulation) TestLinearizability() error {
+	defer func() {
+		if r := recover(); r != nil {
+			s.TearDownSuite()
 			panic(r)
 		}
 	}()
@@ -72,7 +121,7 @@ func (s *Simulation) testSingleClientCorrectness() error {
 
 	client, err := NewClient(s.config.Addr)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	generator := NewGenerator(&GeneratorConfig{
@@ -102,13 +151,50 @@ type TestCase interface {
 	Run() error
 }
 
-type LoadTestCase struct{}
+type LoadTestCase struct {
+	Store     *store.Store
+	Clients   []*Client
+	Generator *Generator
+}
 
-func NewLoadTestCase() TestCase { return nil }
+func NewLoadTestCase(s *store.Store, cs []*Client, g *Generator) TestCase {
+	return &LoadTestCase{
+		Store:     s,
+		Clients:   cs,
+		Generator: g,
+	}
+}
 
-type MultipleTestCase struct{}
+func (t *LoadTestCase) Run() error {
+	defer func() {
+		checker.NewVisualizer().Visualize(t.Store.History())
+	}()
 
-func NewMultipleTestCase() TestCase { return nil }
+	ctx := context.Background()
+	results := make(chan store.Operation, len(t.Clients))
+
+	go func() {
+		t.Store.Run(results)
+	}()
+
+	var wg sync.WaitGroup
+	wg.Add(len(t.Clients))
+	for _, c := range t.Clients {
+		go func(client *Client) {
+			defer wg.Done()
+			ops := t.Generator.Generate()
+			for _, op := range ops {
+				results <- client.Invoke(ctx, op)
+			}
+		}(c)
+	}
+	wg.Wait()
+
+	close(results)
+	<-t.Store.Done
+
+	return nil
+}
 
 type SingleTestCase struct {
 	Store     *store.Store
@@ -133,13 +219,18 @@ func (t *SingleTestCase) Run() error {
 
 	ctx := context.Background()
 	ops := t.Generator.Generate()
+	results := make(chan store.Operation, len(ops))
+
+	go func() {
+		t.Store.Run(results)
+	}()
+
 	for _, op := range ops {
-		t.Store.Add(t.Client.Invoke(ctx, op))
+		results <- t.Client.Invoke(ctx, op)
 	}
+
+	close(results)
+	<-t.Store.Done
 
 	return t.Checker.Check(t.Store.History())
 }
-
-//
-// utils
-//

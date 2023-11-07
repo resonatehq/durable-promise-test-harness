@@ -8,13 +8,13 @@ import (
 
 // Checker validates that a history is correct with respect to some model.
 type Checker struct {
-	visualizer
+	*Visualizer
 }
 
 // Creates a new Checker with reasonable defaults.
 func NewChecker() *Checker {
 	return &Checker{
-		visualizer: newVisualizer(),
+		Visualizer: NewVisualizer(),
 	}
 }
 

@@ -11,20 +11,20 @@ import (
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 )
 
-type visualizer struct{}
+type Visualizer struct{}
 
-func newVisualizer() visualizer {
-	return visualizer{}
+func NewVisualizer() *Visualizer {
+	return &Visualizer{}
 }
 
 // renders timeline of history and performance analysis
-func (v *visualizer) Visualize(history []store.Operation) error {
+func (v *Visualizer) Visualize(history []store.Operation) error {
 	content := v.performance(history) + "\n" + v.timeline(history)
 	today := time.Now().Format("01-02-2006_15-04-05")
 	return utils.WriteStringToFile(content, fmt.Sprintf("test/results/single-client-correctness/%s", today))
 }
 
-func (v *visualizer) timeline(history []store.Operation) string {
+func (v *Visualizer) timeline(history []store.Operation) string {
 	events := makeEvents(history)
 
 	build := strings.Builder{}
@@ -36,7 +36,7 @@ func (v *visualizer) timeline(history []store.Operation) string {
 	return build.String()
 }
 
-func (v *visualizer) performance(history []store.Operation) string {
+func (v *Visualizer) performance(history []store.Operation) string {
 	reqTimes := []time.Duration{}
 	for i := range history {
 		latency := history[i].ReturnEvent.Sub(history[i].CallEvent)
