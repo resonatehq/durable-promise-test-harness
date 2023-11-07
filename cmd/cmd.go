@@ -1,14 +1,13 @@
 package cmd
 
 import (
+	"github.com/resonatehq/durable-promise-test-harness/cmd/linearize"
 	"github.com/resonatehq/durable-promise-test-harness/cmd/load"
-	"github.com/resonatehq/durable-promise-test-harness/cmd/multiple"
-	"github.com/resonatehq/durable-promise-test-harness/cmd/single"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
-func NewDPCommand() *cobra.Command {
+func New() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "harness",
 		Short: "durable promise server testing harness",
@@ -16,15 +15,9 @@ func NewDPCommand() *cobra.Command {
 
 	groups := utils.CommandGroups{
 		{
-			Message: "Single client correctness test commands",
+			Message: "Linearizability test commands",
 			Commands: []*cobra.Command{
-				single.NewCmd(),
-			},
-		},
-		{
-			Message: "Multiple client linearizability test commands",
-			Commands: []*cobra.Command{
-				multiple.NewCmd(),
+				linearize.NewCmd(),
 			},
 		},
 		{

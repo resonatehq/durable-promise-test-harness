@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	if err := cmd.NewDPCommand().Execute(); err != nil {
+	if err := cmd.New().Execute(); err != nil {
 		log.Fatal(err)
 	}
 }

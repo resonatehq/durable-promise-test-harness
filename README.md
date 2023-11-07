@@ -33,10 +33,24 @@ The `Durable Promise Server` implements the core [Durable Promise Specification]
 
 ## Usage 
 
-This project contains a full test suite using go:
-```bash
-DP_SERVER=http://0.0.0.0:8001/ go test -v -timeout 45m ./test/...  
-```
+## Getting Started
+
+1. **Build**
+
+  ```bash
+  go build -o harness
+  ```
+2. **Run linearizability tests**
+
+  ```bash
+  ./harness linearize -a http://0.0.0.0:8001/ -n 1000 -c 3
+  ```
+
+3. **Run load tests**
+
+  ```bash
+  ./harness load -a http://0.0.0.0:8001/ -n 1000
+  ```
 
 NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<test-name>/<date>` for later review.
 
