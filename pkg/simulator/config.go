@@ -1,5 +1,7 @@
 package simulator
 
 type SimulationConfig struct {
-	Addr string
+	Addr        string
+	NumClients  int
+	NumRequests int
 }

@@ -67,6 +67,14 @@ func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, err
 		return state, errors.New("res.Value not of type *openapi.Promise")
 	}
 
+	// search never fails from user's point of view - ok
+	if !reflect.DeepEqual(store.Ok, resp.status) {
+		return state, fmt.Errorf("expected '%d', got '%d'", store.Ok, resp.status)
+	}
+	if !reflect.DeepEqual(http.StatusOK, resp.code) {
+		return state, fmt.Errorf("expected '%d', got '%d'", http.StatusOK, resp.code)
+	}
+
 	localSearchResults, serverSearchResults := state.Search(*reqObj.State, req.time.UnixMilli()), *respObj.Promises
 
 	sort.Slice(localSearchResults, func(i, j int) bool {
@@ -369,10 +377,9 @@ func deepEqualPromise(local, external *openapi.Promise) error {
 	if !reflect.DeepEqual(local.State, external.State) {
 		return fmt.Errorf("expected'State' %v, got %v", local.State, external.State)
 	}
-	// TODO: expected nil, get %map[]
-	// if !reflect.DeepEqual(local.Tags, external.Tags) {
-	// 	return fmt.Errorf("expected 'Tags' %v, got %v", local.Tags, external.Tags)
-	// }
+	if !reflect.DeepEqual(local.Tags, external.Tags) {
+		return fmt.Errorf("expected 'Tags' %v, got %v", local.Tags, external.Tags)
+	}
 	if !reflect.DeepEqual(local.Timeout, external.Timeout) {
 		return fmt.Errorf("expected 'Timeout' %v, got %v", local.Timeout, external.Timeout)
 	}
