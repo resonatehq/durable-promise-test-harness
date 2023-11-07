@@ -16,7 +16,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "single",
 		Short:   "run a single client and test for correctness",
-		Example: "single -a http://0.0.0.0:8001/ -r 1000",
+		Example: "harness single -a http://0.0.0.0:8001/ -r 1000",
 		Run: func(cmd *cobra.Command, args []string) {
 			sim := simulator.NewSimulation(&simulator.SimulationConfig{
 				Addr:        addr,

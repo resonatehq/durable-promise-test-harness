@@ -17,7 +17,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "multiple",
 		Short:   "run multiple concurrent clients and test for linearizability",
-		Example: "multiple -a http://0.0.0.0:8001/ -c 10 -r 1000",
+		Example: "harness multiple -a http://0.0.0.0:8001/ -c 10 -r 1000",
 		Run: func(cmd *cobra.Command, args []string) {
 			sim := simulator.NewSimulation(&simulator.SimulationConfig{
 				Addr:        addr,
