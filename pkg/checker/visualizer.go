@@ -28,7 +28,7 @@ func (v *visualizer) timeline(history []store.Operation) string {
 	events := makeEvents(history)
 
 	build := strings.Builder{}
-	build.WriteString("Event history:\n")
+	build.WriteString("Event History:\n")
 	for i := range events {
 		build.WriteString(fmt.Sprintf("  %s\n", events[i].String()))
 	}

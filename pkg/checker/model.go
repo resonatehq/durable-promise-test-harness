@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/openapi"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
@@ -68,7 +67,7 @@ func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, err
 		return state, errors.New("res.Value not of type *openapi.Promise")
 	}
 
-	localSearchResults, serverSearchResults := state.Search(*reqObj.State), *respObj.Promises
+	localSearchResults, serverSearchResults := state.Search(*reqObj.State, req.time.UnixMilli()), *respObj.Promises
 
 	sort.Slice(localSearchResults, func(i, j int) bool {
 		return *localSearchResults[i].Id < *localSearchResults[j].Id
@@ -106,7 +105,7 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, errors.New("res.Value not of type *openapi.Promise")
 	}
 
-	local, err := state.Get(reqObj)
+	local, err := state.Get(reqObj, req.time.UnixMilli())
 	if err != nil {
 		if resp.status == store.Fail && resp.code == http.StatusNotFound {
 			return state, nil
@@ -149,7 +148,7 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	}
 
 	if resp.status == store.Fail {
-		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id) {
+		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id, req.time.UnixMilli()) {
 			return state, nil
 		}
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
@@ -188,12 +187,12 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	if resp.status == store.Fail {
 		switch resp.code {
 		case http.StatusForbidden:
-			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) {
+			if state.Completed(*reqObj.Id, req.time.UnixMilli()) || isTimedOut(*respObj.State) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
 		case http.StatusNotFound:
-			if !state.Exists(*reqObj.Id) {
+			if !state.Exists(*reqObj.Id, req.time.UnixMilli()) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 404 status code: promise exists")
@@ -219,18 +218,17 @@ func (s State) Set(key string, val *openapi.Promise) {
 	s[key] = val
 }
 
-func (s State) Search(stateParam string) []openapi.Promise {
+func (s State) Search(stateParam string, callEvent int64) []openapi.Promise {
 	filter := make([]openapi.Promise, 0)
 	for key, promise := range s {
 		if promise == nil && promise.State == nil {
 			continue
 		}
 		// before every read update for timeout since its implicit
-		p := s.SetImplicitTimeout(key, promise)
-		if strings.EqualFold(stateParam, string(openapi.REJECTED)) {
-			if isRejectedState(*p.State) {
-				filter = append(filter, *p)
-			}
+		p := s.SetImplicitTimeout(key, promise, callEvent)
+		if strings.EqualFold(stateParam, string(openapi.REJECTED)) && isRejectedState(*p.State) {
+			filter = append(filter, *p)
+			continue
 		}
 		if strings.EqualFold(stateParam, string(*p.State)) {
 			filter = append(filter, *p)
@@ -239,24 +237,24 @@ func (s State) Search(stateParam string) []openapi.Promise {
 	return filter
 }
 
-func (s State) Get(key string) (*openapi.Promise, error) {
+func (s State) Get(key string, callEvent int64) (*openapi.Promise, error) {
 	val, ok := s[key]
 	if !ok {
 		return nil, errors.New("promise not found")
 	}
 	// before every read update for timeout since its implicit
-	return s.SetImplicitTimeout(key, val), nil
+	return s.SetImplicitTimeout(key, val, callEvent), nil
 }
 
-func (s State) SetImplicitTimeout(key string, val *openapi.Promise) *openapi.Promise {
+func (s State) SetImplicitTimeout(key string, val *openapi.Promise, callEvent int64) *openapi.Promise {
 	var timeout int64
 	if val.Timeout == nil {
 		timeout = int64(0)
 	} else {
 		timeout = int64(*val.Timeout)
 	}
-	now := time.Now().UnixMilli()
-	if int64(timeout) < now {
+	// based on what to expect
+	if int64(timeout) <= callEvent {
 		val.State = utils.ToPointer(openapi.REJECTEDTIMEDOUT)
 		s[key] = val
 	}
@@ -264,13 +262,13 @@ func (s State) SetImplicitTimeout(key string, val *openapi.Promise) *openapi.Pro
 	return val
 }
 
-func (s State) Exists(key string) bool {
-	_, err := s.Get(key)
+func (s State) Exists(key string, callEvent int64) bool {
+	_, err := s.Get(key, callEvent)
 	return err == nil
 }
 
-func (s State) Completed(key string) bool {
-	val, err := s.Get(key)
+func (s State) Completed(key string, callEvent int64) bool {
+	val, err := s.Get(key, callEvent)
 	if err != nil {
 		return false
 	}
@@ -299,7 +297,7 @@ func (s State) String() string {
 	build.WriteString("STATE\n")
 	build.WriteString("-----\n")
 	for _, k := range keys {
-		promise, _ := s.Get(k)
+		promise := s[k]
 		build.WriteString(fmt.Sprintf(
 			"Promise(Id=%v, state=%v)\n",
 			*promise.Id,

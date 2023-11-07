@@ -103,7 +103,7 @@ func (t *TestCase) Run() error {
 	}()
 
 	ctx := context.Background()
-	ops := t.Generator.Generate(.1 * 1000)
+	ops := t.Generator.Generate(1 * 1000)
 	for _, op := range ops {
 		t.Store.Add(t.Client.Invoke(ctx, op))
 	}
