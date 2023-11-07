@@ -21,7 +21,7 @@ func newVisualizer() visualizer {
 func (v *visualizer) Visualize(history []store.Operation) error {
 	content := v.performance(history) + "\n" + v.timeline(history)
 	today := time.Now().Format("01-02-2006_15-04-05")
-	return utils.WriteStringToFile(content, fmt.Sprintf("results/single-client-correctness/%s", today))
+	return utils.WriteStringToFile(content, fmt.Sprintf("test/results/single-client-correctness/%s", today))
 }
 
 func (v *visualizer) timeline(history []store.Operation) string {

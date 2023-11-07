@@ -14,14 +14,17 @@ import (
 type GeneratorConfig struct {
 	r *rand.Rand
 
+	numRequests int
+
 	Ids  int
 	Data int
 }
 
 type Generator struct {
-	r       *rand.Rand
-	idSet   []string
-	dataSet [][]byte
+	r           *rand.Rand
+	numRequests int
+	idSet       []string
+	dataSet     [][]byte
 }
 
 func NewGenerator(config *GeneratorConfig) *Generator {
@@ -36,13 +39,14 @@ func NewGenerator(config *GeneratorConfig) *Generator {
 	}
 
 	return &Generator{
-		r:       config.r,
-		idSet:   idSet,
-		dataSet: dataSet,
+		r:           config.r,
+		numRequests: config.numRequests,
+		idSet:       idSet,
+		dataSet:     dataSet,
 	}
 }
 
-func (g *Generator) Generate(n int) []store.Operation {
+func (g *Generator) Generate() []store.Operation {
 	ops := []store.Operation{}
 
 	clientId := int(uuid.New().ID())
@@ -56,7 +60,7 @@ func (g *Generator) Generate(n int) []store.Operation {
 		g.GenerateRejectPromise,
 	}
 
-	for i := 0; i < n; i++ {
+	for i := 0; i < g.numRequests; i++ {
 		bound := len(generators)
 		ops = append(ops, generators[g.r.Intn(bound)](g.r, clientId))
 	}

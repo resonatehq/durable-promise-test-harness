@@ -2,21 +2,17 @@ package simulator
 
 import (
 	"context"
+	"errors"
+	"log"
 	"math/rand"
-	"net"
-	"strings"
-	"testing"
 	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/checker"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
+	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 )
 
 type Simulation struct {
-	suite.Suite
-
 	config *SimulationConfig
 }
 
@@ -26,12 +22,27 @@ func NewSimulation(config *SimulationConfig) *Simulation {
 	}
 }
 
-func (s *Simulation) SetupSuite() {
-	s.T().Logf("testing server readiness at %s\n", s.config.Addr)
+func (s *Simulation) Load() error {
+	return nil
+}
 
+func (s *Simulation) Multiple() error {
+	return nil
+}
+
+func (s *Simulation) Single() error {
+	if err := s.setupSuite(); err != nil {
+		return err
+	}
+
+	return s.testSingleClientCorrectness()
+}
+
+func (s *Simulation) setupSuite() error {
+	log.Printf("testing server readiness at %s\n", s.config.Addr)
 	var ready bool
 	for i := 0; i < 10; i++ {
-		if IsReady(s.config.Addr) {
+		if utils.IsReady(s.config.Addr) {
 			ready = true
 			break
 		}
@@ -40,56 +51,74 @@ func (s *Simulation) SetupSuite() {
 	}
 
 	if !ready {
-		s.T().Fatal("server did not become ready in time.")
+		return errors.New("server did not become ready in time")
 	}
+	return nil
 }
 
-func (s *Simulation) TearDownSuite() {}
+func (s *Simulation) tearDownSuite() error {
+	return nil
+}
 
-func (s *Simulation) TestSingleClientCorrectness() {
+func (s *Simulation) testSingleClientCorrectness() error {
 	defer func() {
 		if r := recover(); r != nil {
-			s.TearDownSuite()
+			s.tearDownSuite()
 			panic(r)
 		}
 	}()
 
-	s.T().Run("single client correctness", func(t *testing.T) {
-		localStore := store.NewStore()
+	localStore := store.NewStore()
 
-		client, err := NewClient(s.config.Addr)
-		if err != nil {
-			panic(err)
-		}
+	client, err := NewClient(s.config.Addr)
+	if err != nil {
+		panic(err)
+	}
 
-		generator := NewGenerator(&GeneratorConfig{
-			r:    rand.New(rand.NewSource(0)),
-			Ids:  100,
-			Data: 100,
-		})
-
-		checker := checker.NewChecker()
-
-		test := NewTestCase(
-			localStore,
-			client,
-			generator,
-			checker,
-		)
-
-		assert.Nil(t, test.Run())
+	generator := NewGenerator(&GeneratorConfig{
+		r:           rand.New(rand.NewSource(0)),
+		numRequests: s.config.NumRequests,
+		Ids:         100,
+		Data:        100,
 	})
+
+	checker := checker.NewChecker()
+
+	test := NewSingleTestCase(
+		localStore,
+		client,
+		generator,
+		checker,
+	)
+
+	if err := test.Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-type TestCase struct {
+type TestCase interface {
+	Run() error
+}
+
+type LoadTestCase struct{}
+
+func NewLoadTestCase() TestCase { return nil }
+
+type MultipleTestCase struct{}
+
+func NewMultipleTestCase() TestCase { return nil }
+
+type SingleTestCase struct {
 	Store     *store.Store
 	Client    *Client
 	Generator *Generator
 	Checker   *checker.Checker
 }
 
-func NewTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) *TestCase {
-	return &TestCase{
+func NewSingleTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) TestCase {
+	return &SingleTestCase{
 		Store:     s,
 		Client:    c,
 		Generator: g,
@@ -97,13 +126,13 @@ func NewTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) *
 	}
 }
 
-func (t *TestCase) Run() error {
+func (t *SingleTestCase) Run() error {
 	defer func() {
 		t.Checker.Visualize(t.Store.History())
 	}()
 
 	ctx := context.Background()
-	ops := t.Generator.Generate(1 * 1000)
+	ops := t.Generator.Generate()
 	for _, op := range ops {
 		t.Store.Add(t.Client.Invoke(ctx, op))
 	}
@@ -111,12 +140,6 @@ func (t *TestCase) Run() error {
 	return t.Checker.Check(t.Store.History())
 }
 
-func IsReady(Addr string) bool {
-	serverAddr := strings.TrimSuffix(strings.TrimPrefix(Addr, "http://"), "/")
-	conn, err := net.DialTimeout("tcp", serverAddr, 1*time.Second)
-	if err != nil {
-		return false
-	}
-	defer conn.Close()
-	return true
-}
+//
+// utils
+//

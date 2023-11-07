@@ -1,10 +1,14 @@
 package utils
 
 import (
+	"net"
 	"os"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/mohae/deepcopy"
+	"github.com/spf13/cobra"
 )
 
 func ToPointer[T any](val T) *T {
@@ -31,4 +35,27 @@ func WriteStringToFile(content string, filepath string) error {
 		return err
 	}
 	return os.WriteFile(filepath, data, 0644)
+}
+
+type CommandGroup struct {
+	Message  string
+	Commands []*cobra.Command
+}
+
+type CommandGroups []CommandGroup
+
+func (g CommandGroups) Add(c *cobra.Command) {
+	for _, group := range g {
+		c.AddCommand(group.Commands...)
+	}
+}
+
+func IsReady(Addr string) bool {
+	serverAddr := strings.TrimSuffix(strings.TrimPrefix(Addr, "http://"), "/")
+	conn, err := net.DialTimeout("tcp", serverAddr, 1*time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }
