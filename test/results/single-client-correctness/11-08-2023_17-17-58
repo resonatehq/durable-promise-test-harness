@@ -1,0 +1,45 @@
+Summary
+=====================
+Requests:
+  Total: 124.019334ms
+  Slowest: 33.745625ms
+  Fastest: 10.537167ms
+  Average: 13.481095ms
+  Requests/Sec: 80.63
+
+Data:
+  Total Data: 0.0004 MB
+  Size/Sec: 0.0029 MB
+
+Latency Distribution:
+  p50: 11.087083ms
+  p75: 11.322166ms
+  p95: 33.745625ms
+  p99: 33.745625ms
+
+Status Code Distribution:
+  200: 4 responses
+  404: 5 responses
+  201: 1 responses
+
+Event History:
+  Event(id=3079029291, clientId=669552220, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-08 17:17:58.485652 -0500 EST m=+0.001910459, status=INVOKE, code=-1)
+  Event(id=3079029291, clientId=669552220, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-08 17:17:58.498472 -0500 EST m=+0.014730126, status=OK, code=200)
+  Event(id=1657694898, clientId=669552220, kind=CALL, api=GET, value="6", time=2023-11-08 17:17:58.4988 -0500 EST m=+0.015058709, status=INVOKE, code=-1)
+  Event(id=1657694898, clientId=669552220, kind=RETURN, api=GET, value={}, time=2023-11-08 17:17:58.509337 -0500 EST m=+0.025595876, status=FAIL, code=404)
+  Event(id=3517536714, clientId=669552220, kind=CALL, api=REJECT, value={"Id":"96","Request":{"value":{"data":""}}}, time=2023-11-08 17:17:58.509346 -0500 EST m=+0.025604834, status=INVOKE, code=-1)
+  Event(id=3517536714, clientId=669552220, kind=RETURN, api=REJECT, value={}, time=2023-11-08 17:17:58.52048 -0500 EST m=+0.036739043, status=FAIL, code=404)
+  Event(id=3736835200, clientId=669552220, kind=CALL, api=REJECT, value={"Id":"88","Request":{"value":{"data":"NjQ="}}}, time=2023-11-08 17:17:58.520489 -0500 EST m=+0.036747168, status=INVOKE, code=-1)
+  Event(id=3736835200, clientId=669552220, kind=RETURN, api=REJECT, value={}, time=2023-11-08 17:17:58.531576 -0500 EST m=+0.047834251, status=FAIL, code=404)
+  Event(id=663968985, clientId=669552220, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-08 17:17:58.531584 -0500 EST m=+0.047842376, status=INVOKE, code=-1)
+  Event(id=663968985, clientId=669552220, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-08 17:17:58.54263 -0500 EST m=+0.058888584, status=OK, code=200)
+  Event(id=3144779129, clientId=669552220, kind=CALL, api=REJECT, value={"Id":"48","Request":{"value":{"data":"NzY="}}}, time=2023-11-08 17:17:58.542639 -0500 EST m=+0.058898084, status=INVOKE, code=-1)
+  Event(id=3144779129, clientId=669552220, kind=RETURN, api=REJECT, value={}, time=2023-11-08 17:17:58.553739 -0500 EST m=+0.069997668, status=FAIL, code=404)
+  Event(id=1534273319, clientId=669552220, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-08 17:17:58.553755 -0500 EST m=+0.070013293, status=INVOKE, code=-1)
+  Event(id=1534273319, clientId=669552220, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-08 17:17:58.564829 -0500 EST m=+0.081087376, status=OK, code=200)
+  Event(id=320810544, clientId=669552220, kind=CALL, api=CREATE, value={"id":"50","param":{"data":"NDc="},"timeout":2524608000000}, time=2023-11-08 17:17:58.564838 -0500 EST m=+0.081097084, status=INVOKE, code=-1)
+  Event(id=320810544, clientId=669552220, kind=RETURN, api=CREATE, value={"createdOn":1699481878565,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-08 17:17:58.598584 -0500 EST m=+0.114842709, status=OK, code=201)
+  Event(id=3204970598, clientId=669552220, kind=CALL, api=REJECT, value={"Id":"68","Request":{"value":{"data":"MzM="}}}, time=2023-11-08 17:17:58.59868 -0500 EST m=+0.114939459, status=INVOKE, code=-1)
+  Event(id=3204970598, clientId=669552220, kind=RETURN, api=REJECT, value={}, time=2023-11-08 17:17:58.609625 -0500 EST m=+0.125884626, status=FAIL, code=404)
+  Event(id=1725050711, clientId=669552220, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-08 17:17:58.609671 -0500 EST m=+0.125929793, status=INVOKE, code=-1)
+  Event(id=1725050711, clientId=669552220, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-08 17:17:58.620993 -0500 EST m=+0.137251959, status=OK, code=200)
