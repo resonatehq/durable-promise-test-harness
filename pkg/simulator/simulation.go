@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -47,8 +46,6 @@ func (s *Simulation) Run() error {
 }
 
 func (s *Simulation) SetupSuite() error {
-	log.Printf("testing server readiness at %s\n", s.config.Addr)
-
 	var ready bool
 	for i := 0; i < 10; i++ {
 		if utils.IsReady(s.config.Addr) {

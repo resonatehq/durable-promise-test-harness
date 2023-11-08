@@ -1,8 +1,6 @@
 package load
 
 import (
-	"log"
-
 	"github.com/resonatehq/durable-promise-test-harness/pkg/simulator"
 	"github.com/spf13/cobra"
 )
@@ -29,8 +27,6 @@ func NewCmd() *cobra.Command {
 			if err := sim.Run(); err != nil {
 				panic(err)
 			}
-
-			log.Printf("load test passed!\n")
 		},
 	}
 
