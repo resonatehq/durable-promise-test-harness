@@ -54,43 +54,43 @@ func newSearchPromiseVerifier() *SearchPromiseVerifier {
 }
 
 func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isValid(resp.status) {
+	if !isValidResponse(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
 	reqObj, ok := req.value.(*openapi.SearchPromisesParams)
 	if !ok {
-		return state, errors.New("res.Value not of type *openapi.SearchPromiseResponse")
+		return state, errors.New("res.Value not of type *openapi.SearchPromisesParams")
 	}
 	respObj, ok := resp.value.(*openapi.SearchPromiseResponse)
 	if !ok {
-		return state, errors.New("res.Value not of type *openapi.Promise")
+		return state, errors.New("res.Value not of type *openapi.SearchPromiseResponse")
 	}
 
-	// search never fails from user's point of view - ok
-	if !reflect.DeepEqual(store.Ok, resp.status) {
+	if resp.status != store.Ok {
 		return state, fmt.Errorf("expected '%d', got '%d'", store.Ok, resp.status)
 	}
-	if !reflect.DeepEqual(http.StatusOK, resp.code) {
+	if resp.code != http.StatusOK {
 		return state, fmt.Errorf("expected '%d', got '%d'", http.StatusOK, resp.code)
 	}
 
-	localSearchResults, serverSearchResults := state.Search(*reqObj.State, req.time.UnixMilli()), *respObj.Promises
+	localResults := state.Search(*reqObj.State)
+	serverResults := *respObj.Promises
 
-	sort.Slice(localSearchResults, func(i, j int) bool {
-		return *localSearchResults[i].Id < *localSearchResults[j].Id
+	sort.Slice(localResults, func(i, j int) bool {
+		return *localResults[i].Id < *localResults[j].Id
 	})
 
-	sort.Slice(serverSearchResults, func(i, j int) bool {
-		return *serverSearchResults[i].Id < *serverSearchResults[j].Id
+	sort.Slice(serverResults, func(i, j int) bool {
+		return *serverResults[i].Id < *serverResults[j].Id
 	})
 
-	err := deepEqualPromiseList(localSearchResults, serverSearchResults)
-	if err != nil {
+	if err := deepEqualPromiseList(state, localResults, serverResults); err != nil {
 		return state, fmt.Errorf("got mistmatched promises search results: %v", err)
 	}
 
-	return state, nil // state does not change
+	// state does not change with read operations
+	return state, nil
 }
 
 type GetPromiseVerifier struct{}
@@ -100,7 +100,7 @@ func newGetPromiseVerifier() *GetPromiseVerifier {
 }
 
 func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isValid(resp.status) {
+	if !isValidResponse(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -113,7 +113,7 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, errors.New("res.Value not of type *openapi.Promise")
 	}
 
-	local, err := state.Get(reqObj, req.time.UnixMilli())
+	local, err := state.Get(reqObj)
 	if err != nil {
 		if resp.status == store.Fail && resp.code == http.StatusNotFound {
 			return state, nil
@@ -121,18 +121,19 @@ func (v *GetPromiseVerifier) Verify(state State, req, resp event) (State, error)
 		return state, err
 	}
 
-	if !reflect.DeepEqual(store.Ok, resp.status) {
+	if resp.status != store.Ok {
 		return state, fmt.Errorf("expected '%d', got '%d'", store.Ok, resp.status)
 	}
-	if !reflect.DeepEqual(http.StatusOK, resp.code) {
+	if resp.code != http.StatusOK {
 		return state, fmt.Errorf("expected '%d', got '%d'", http.StatusOK, resp.code)
 	}
-	err = deepEqualPromise(local, respObj)
-	if err != nil {
+
+	if err = deepEqualPromise(state, local, respObj); err != nil {
 		return state, fmt.Errorf("got incorrect promise result: %v", err)
 	}
 
-	return state, nil // state does not change
+	// state does not change with read operations
+	return state, nil
 }
 
 type CreatePromiseVerifier struct{}
@@ -142,7 +143,7 @@ func newCreatePromiseVerifier() *CreatePromiseVerifier {
 }
 
 func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isValid(resp.status) {
+	if !isValidResponse(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -156,14 +157,20 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	}
 
 	if resp.status == store.Fail {
-		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id, req.time.UnixMilli()) {
+		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id) {
 			return state, nil
 		}
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
 	}
 
-	if resp.code != http.StatusCreated && resp.code != http.StatusOK && *respObj.State == openapi.PENDING {
-		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
+	if resp.status != store.Ok {
+		return state, fmt.Errorf("expected '%d', got '%d'", store.Ok, resp.status)
+	}
+	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
+		return state, fmt.Errorf("expected '%d' or '%d', got '%d'", http.StatusCreated, http.StatusOK, resp.code)
+	}
+	if *respObj.State != openapi.PENDING {
+		return state, fmt.Errorf("expected '%s', got '%s'", openapi.PENDING, *respObj.State)
 	}
 
 	newState := utils.DeepCopy(state)
@@ -179,7 +186,7 @@ func newCompletePromiseVerifier() *CompletePromiseVerifier {
 }
 
 func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, error) {
-	if !isValid(resp.status) {
+	if !isValidResponse(resp.status) {
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -195,12 +202,12 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	if resp.status == store.Fail {
 		switch resp.code {
 		case http.StatusForbidden:
-			if state.Completed(*reqObj.Id, req.time.UnixMilli()) || isTimedOut(*respObj.State) {
+			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) { // HERE
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
 		case http.StatusNotFound:
-			if !state.Exists(*reqObj.Id, req.time.UnixMilli()) {
+			if !state.Exists(*reqObj.Id) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 404 status code: promise exists")
@@ -226,58 +233,39 @@ func (s State) Set(key string, val *openapi.Promise) {
 	s[key] = val
 }
 
-func (s State) Search(stateParam string, callEvent int64) []openapi.Promise {
+func (s State) Search(stateParam string) []openapi.Promise {
 	filter := make([]openapi.Promise, 0)
-	for key, promise := range s {
+	for _, promise := range s {
 		if promise == nil && promise.State == nil {
 			continue
 		}
-		// before every read update for timeout since its implicit
-		p := s.SetImplicitTimeout(key, promise, callEvent)
-		if strings.EqualFold(stateParam, string(openapi.REJECTED)) && isRejectedState(*p.State) {
-			filter = append(filter, *p)
+		if strings.EqualFold(stateParam, string(openapi.REJECTED)) && isRejectedState(*promise.State) {
+			filter = append(filter, *promise)
 			continue
 		}
-		if strings.EqualFold(stateParam, string(*p.State)) {
-			filter = append(filter, *p)
+		if strings.EqualFold(stateParam, string(*promise.State)) {
+			filter = append(filter, *promise)
 		}
 	}
 	return filter
 }
 
-func (s State) Get(key string, callEvent int64) (*openapi.Promise, error) {
+func (s State) Get(key string) (*openapi.Promise, error) {
 	val, ok := s[key]
 	if !ok {
 		return nil, errors.New("promise not found")
 	}
-	// before every read update for timeout since its implicit
-	return s.SetImplicitTimeout(key, val, callEvent), nil
+	return val, nil
 }
 
-func (s State) SetImplicitTimeout(key string, val *openapi.Promise, callEvent int64) *openapi.Promise {
-	var timeout int64
-	if val.Timeout == nil {
-		timeout = int64(0)
-	} else {
-		timeout = int64(*val.Timeout)
-	}
-	// based on what to expect
-	if int64(timeout) <= callEvent {
-		val.State = utils.ToPointer(openapi.REJECTEDTIMEDOUT)
-		s[key] = val
-	}
-
-	return val
+func (s State) Exists(key string) bool {
+	_, ok := s[key]
+	return ok
 }
 
-func (s State) Exists(key string, callEvent int64) bool {
-	_, err := s.Get(key, callEvent)
-	return err == nil
-}
-
-func (s State) Completed(key string, callEvent int64) bool {
-	val, err := s.Get(key, callEvent)
-	if err != nil {
+func (s State) Completed(key string) bool {
+	val, ok := s[key]
+	if !ok {
 		return false
 	}
 
@@ -320,7 +308,7 @@ func (s State) String() string {
 // utils
 //
 
-func isValid(stat store.Status) bool {
+func isValidResponse(stat store.Status) bool {
 	return stat == store.Ok || stat == store.Fail
 }
 
@@ -350,12 +338,12 @@ func isRejectedState(state openapi.PromiseState) bool {
 	}
 }
 
-func deepEqualPromiseList(local, external []openapi.Promise) error {
+func deepEqualPromiseList(state State, local, external []openapi.Promise) error {
 	if len(local) != len(external) {
 		return fmt.Errorf("expected '%v' promises, got '%v'instead", len(local), len(external))
 	}
 	for i := range local {
-		err := deepEqualPromise(&local[i], &external[i])
+		err := deepEqualPromise(state, &local[i], &external[i])
 		if err != nil {
 			return err
 		}
@@ -363,7 +351,7 @@ func deepEqualPromiseList(local, external []openapi.Promise) error {
 	return nil
 }
 
-func deepEqualPromise(local, external *openapi.Promise) error {
+func deepEqualPromise(state State, local, external *openapi.Promise) error {
 	// intentionally ignore createdOn and completedOn fields
 	if !reflect.DeepEqual(local.CreatedOn, external.CreatedOn) {
 		return fmt.Errorf("expected 'CreatedOn' %v, got %v", local.CreatedOn, external.CreatedOn)
@@ -374,9 +362,6 @@ func deepEqualPromise(local, external *openapi.Promise) error {
 	if !reflect.DeepEqual(local.Param, external.Param) {
 		return fmt.Errorf("expected 'Param' %v, got %v", local.Param, external.Param)
 	}
-	if !reflect.DeepEqual(local.State, external.State) {
-		return fmt.Errorf("expected'State' %v, got %v", local.State, external.State)
-	}
 	if !reflect.DeepEqual(local.Tags, external.Tags) {
 		return fmt.Errorf("expected 'Tags' %v, got %v", local.Tags, external.Tags)
 	}
@@ -386,5 +371,26 @@ func deepEqualPromise(local, external *openapi.Promise) error {
 	if !reflect.DeepEqual(local.Value, external.Value) {
 		return fmt.Errorf("expected 'Value' %v, got %v", local.Value, external.Value)
 	}
+
+	// A client and a server may have clocks that are out of sync with each other. The client's
+	// clock reflect its local time, while the severer's clock reflects the standard time for that
+	// system. When setting timeouts for requests between the client and the sever, the server's
+	// clock is the one that matters. This is because the server sets the deadline for a request
+	// based on its own clock. If the client's clock drifts, it may think a request timed out when
+	// it really still has time left according to the server. Or the client may think it still has
+	// time to send a request when the deadline has already passed on the server side. To avoid
+	// unpredictable behavior, the server's clock is the definitive source of time for any timeouts.
+	// This keeps the timing consistent from the perspective of the server, which helps ensure
+	// reliability in the system.
+	if external.State != nil && *external.State != openapi.REJECTEDTIMEDOUT {
+		if !reflect.DeepEqual(local.State, external.State) {
+			return fmt.Errorf("expected'State' %v, got %v", local.State, external.State)
+		}
+	} else {
+		// if external state is timeout, then local state should update to timedout
+		local.State = external.State
+		state.Set(*local.Id, local)
+	}
+
 	return nil
 }
