@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/resonatehq/durable-promise-test-harness/cmd/run"
+	"github.com/resonatehq/durable-promise-test-harness/cmd/verify"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +16,7 @@ func New() *cobra.Command {
 		{
 			Message: "Load test commands",
 			Commands: []*cobra.Command{
-				run.NewCmd(),
+				verify.NewCmd(),
 			},
 		},
 	}

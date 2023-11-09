@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anishathalye/porcupine"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/checker"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
@@ -29,21 +28,15 @@ func (s *Simulation) Run() error {
 		return fmt.Errorf("error setting up suite: %v", err)
 	}
 
-	var err error
-	switch s.config.Mode {
-	case Load:
-		err = s.TestLoad()
-	case Linearizability:
-		err = s.TestLinearizability()
-	default:
-		return errors.New("received unknown mode")
+	if err := s.Verify(); err != nil {
+		return fmt.Errorf("error running test: %v", err)
 	}
 
 	if err := s.TearDownSuite(); err != nil {
 		return fmt.Errorf("error tearing down suite: %v", err)
 	}
 
-	return err
+	return nil
 }
 
 func (s *Simulation) SetupSuite() error {
@@ -68,7 +61,7 @@ func (s *Simulation) TearDownSuite() error {
 	return nil
 }
 
-func (s *Simulation) TestLoad() error {
+func (s *Simulation) Verify() error {
 	defer func() {
 		if r := recover(); r != nil {
 			s.TearDownSuite()
@@ -94,46 +87,11 @@ func (s *Simulation) TestLoad() error {
 		Data:        100,
 	})
 
-	test := NewLoadTestCase(
-		localStore,
-		clients,
-		generator,
-	)
-
-	if err := test.Run(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Simulation) TestLinearizability() error {
-	defer func() {
-		if r := recover(); r != nil {
-			s.TearDownSuite()
-			panic(r)
-		}
-	}()
-
-	localStore := store.NewStore()
-
-	client, err := NewClient(s.config.Addr)
-	if err != nil {
-		return err
-	}
-
-	generator := NewGenerator(&GeneratorConfig{
-		r:           rand.New(rand.NewSource(0)),
-		numRequests: s.config.NumRequests,
-		Ids:         100,
-		Data:        100,
-	})
-
 	checker := checker.NewChecker()
 
-	test := NewSingleTestCase(
+	test := NewTestCase(
 		localStore,
-		client,
+		clients,
 		generator,
 		checker,
 	)
@@ -145,28 +103,27 @@ func (s *Simulation) TestLinearizability() error {
 	return nil
 }
 
-type TestCase interface {
-	Run() error
-}
-
-type LoadTestCase struct {
+type TestCase struct {
 	Store     *store.Store
 	Clients   []*Client
 	Generator *Generator
+	Checker   *checker.Checker
 }
 
-func NewLoadTestCase(s *store.Store, cs []*Client, g *Generator) TestCase {
-	return &LoadTestCase{
+func NewTestCase(s *store.Store, cs []*Client, g *Generator, ch *checker.Checker) *TestCase {
+	return &TestCase{
 		Store:     s,
 		Clients:   cs,
 		Generator: g,
+		Checker:   ch,
 	}
 }
 
-func (t *LoadTestCase) Run() error {
+func (t *TestCase) Run() error {
 	defer func() {
 		checker.NewVisualizer().Visualize(t.Store.History())
 		// checker.PorcupineVisualize(t.Store.History())
+		// TODO: fix this to output this too
 	}()
 
 	ctx := context.Background()
@@ -188,50 +145,6 @@ func (t *LoadTestCase) Run() error {
 		}(c)
 	}
 	wg.Wait()
-
-	close(results)
-	<-t.Store.Done
-
-	// make this verbose to see the errors on the console
-	if porcupine.CheckEvents(checker.PorcupineModel, checker.MakePorcupineEvents(t.Store.History())) {
-		return nil
-	} else {
-		return errors.New("porcupine failed")
-	}
-}
-
-type SingleTestCase struct {
-	Store     *store.Store
-	Client    *Client
-	Generator *Generator
-	Checker   *checker.Checker
-}
-
-func NewSingleTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) TestCase {
-	return &SingleTestCase{
-		Store:     s,
-		Client:    c,
-		Generator: g,
-		Checker:   ch,
-	}
-}
-
-func (t *SingleTestCase) Run() error {
-	defer func() {
-		t.Checker.Visualize(t.Store.History())
-	}()
-
-	ctx := context.Background()
-	ops := t.Generator.Generate()
-	results := make(chan store.Operation, len(ops))
-
-	go func() {
-		t.Store.Run(results)
-	}()
-
-	for _, op := range ops {
-		results <- t.Client.Invoke(ctx, op)
-	}
 
 	close(results)
 	<-t.Store.Done

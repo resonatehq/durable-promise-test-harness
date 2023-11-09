@@ -1,4 +1,4 @@
-package run
+package verify
 
 import (
 	"github.com/resonatehq/durable-promise-test-harness/pkg/simulator"
@@ -13,9 +13,9 @@ var (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "run",
-		Short:   "Run multiple concurrent clients to check for linearizable consistency and performance",
-		Example: "harness run -a http://0.0.0.0:8001/ -r 1000 -c 10",
+		Use:     "verify",
+		Short:   "Run multiple concurrent clients to verify for linearizable consistency and performance",
+		Example: "harness verify -a http://0.0.0.0:8001/ -r 1000 -c 10",
 		Run: func(cmd *cobra.Command, args []string) {
 			sim := simulator.NewSimulation(&simulator.SimulationConfig{
 				Addr:        addr,

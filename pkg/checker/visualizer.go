@@ -23,7 +23,7 @@ func (v *Visualizer) Visualize(history []store.Operation) error {
 	performance := v.performance(history)
 	content := performance + "\n" + v.timeline(history)
 	today := time.Now().Format("01-02-2006_15-04-05")
-	err := utils.WriteStringToFile(content, fmt.Sprintf("test/results/single-client-correctness/%s", today))
+	err := utils.WriteStringToFile(content, fmt.Sprintf("test/results/%s", today))
 	if err != nil {
 		return err
 	}
