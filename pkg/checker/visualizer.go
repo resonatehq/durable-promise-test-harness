@@ -56,7 +56,7 @@ func (v *Visualizer) performance(history []store.Operation) string {
 	// Summary
 	build.WriteString("Summary\n")
 	build.WriteString("=====================\n")
-	build.WriteString("Linearizability Check: PASS\n")
+	build.WriteString("Linearizability Check: PASS\n") // don't make this fixed
 	build.WriteString("\n")
 
 	// Requests

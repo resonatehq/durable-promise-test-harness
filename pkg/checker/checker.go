@@ -2,6 +2,7 @@ package checker
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/anishathalye/porcupine"
@@ -24,9 +25,18 @@ func NewChecker() *Checker {
 func (c *Checker) Check(history []store.Operation) error {
 	model, events := newPorcupineModel(), makePorcupineEvents(history)
 
-	res, _ := porcupine.CheckEventsVerbose(model, events, 1*time.Hour)
+	res, info := porcupine.CheckEventsVerbose(model, events, 1*time.Hour)
 	if res == porcupine.Illegal {
 		return errors.New("failed linearizability check")
+	}
+
+	file, err := os.CreateTemp("test/results/", "*.html")
+	if err != nil {
+		return err
+	}
+	err = porcupine.Visualize(model, info, file)
+	if err != nil {
+		return err
 	}
 
 	return nil

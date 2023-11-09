@@ -121,9 +121,7 @@ func NewTestCase(s *store.Store, cs []*Client, g *Generator, ch *checker.Checker
 
 func (t *TestCase) Run() error {
 	defer func() {
-		checker.NewVisualizer().Visualize(t.Store.History())
-		// checker.PorcupineVisualize(t.Store.History())
-		// TODO: fix this to output this too
+		t.Checker.Visualize(t.Store.History())
 	}()
 
 	ctx := context.Background()
@@ -135,7 +133,9 @@ func (t *TestCase) Run() error {
 
 	var wg sync.WaitGroup
 	wg.Add(len(t.Clients))
+
 	for _, c := range t.Clients {
+
 		go func(client *Client) {
 			defer wg.Done()
 			ops := t.Generator.Generate()
@@ -143,6 +143,7 @@ func (t *TestCase) Run() error {
 				results <- client.Invoke(ctx, op)
 			}
 		}(c)
+
 	}
 	wg.Wait()
 

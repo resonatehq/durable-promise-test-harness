@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/anishathalye/porcupine"
@@ -10,10 +9,10 @@ import (
 
 // newPorcupineModel is being used as a wrapper around the model for its functionality.
 func newPorcupineModel() porcupine.Model {
+	model := newDurablePromiseModel()
 
 	return porcupine.Model{
 		Init: func() interface{} {
-			model := newDurablePromiseModel()
 			return model.Init()
 		},
 		Step: func(state, input, output interface{}) (bool, interface{}) {
@@ -21,25 +20,19 @@ func newPorcupineModel() porcupine.Model {
 			in := input.(event)
 			out := output.(event)
 
-			model := newDurablePromiseModel()
-
 			newState, err := model.Step(s, in, out)
-			if err != nil {
-				panic(fmt.Sprintf(
-					"bad op: %v: in=%s out=%s from %s",
-					err,
-					in.String(),
-					out.String(),
-					s.String(),
-				))
-			}
-
 			return err == nil, newState
 		},
 		Equal: func(state1, state2 interface{}) bool {
 			s1 := state1.(State)
 			s2 := state2.(State)
 			return reflect.DeepEqual(s1, s2)
+		},
+		DescribeOperation: func(input interface{}, output interface{}) string {
+			return input.(event).API.String()
+		},
+		DescribeState: func(state interface{}) string {
+			return state.(State).String()
 		},
 	}
 
