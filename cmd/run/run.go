@@ -1,4 +1,4 @@
-package load
+package run
 
 import (
 	"github.com/resonatehq/durable-promise-test-harness/pkg/simulator"
@@ -14,7 +14,7 @@ var (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "run",
-		Short:   "run a load test with multiple concurrent clients",
+		Short:   "Run multiple concurrent clients to check for linearizable consistency and performance",
 		Example: "harness load -a http://0.0.0.0:8001/ -c 10 -r 1000",
 		Run: func(cmd *cobra.Command, args []string) {
 			sim := simulator.NewSimulation(&simulator.SimulationConfig{

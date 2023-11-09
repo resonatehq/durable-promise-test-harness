@@ -33,8 +33,6 @@ The `Durable Promise Server` implements the core [Durable Promise Specification]
 
 ## Usage 
 
-## Getting Started
-
 1. **Build**
 
   X
