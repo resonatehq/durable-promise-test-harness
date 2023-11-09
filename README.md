@@ -35,29 +35,17 @@ The `Durable Promise Server` implements the core [Durable Promise Specification]
 
 1. **Build**
 
-  X
+   ```bash
+   go build -o harness
+   ```
 
-  ```bash
-  go build -o harness
-  ```
+2. **Verify**
 
-2. **Run linearizability tests**
+   ```bash
+   ./harness verify -a http://0.0.0.0:8001/ -r 1000 -c 3
+   ```
 
-  X 
-
-  ```bash
-  ./harness linearize -a http://0.0.0.0:8001/ -r 1000 -c 3
-  ```
-
-3. **Run load tests**
-
-  X 
-  
-  ```bash
-  ./harness load -a http://0.0.0.0:8001/ -r 1000
-  ```
-
-NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<test-name>/<date>` for later review.
+NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<date>` for later review.
 
 ## Design Decisions 
 
