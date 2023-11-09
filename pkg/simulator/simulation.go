@@ -192,8 +192,8 @@ func (t *LoadTestCase) Run() error {
 	close(results)
 	<-t.Store.Done
 
+	// make this verbose to see the errors on the console
 	if porcupine.CheckEvents(checker.PorcupineModel, checker.MakePorcupineEvents(t.Store.History())) {
-		fmt.Println("porcupine passed!")
 		return nil
 	} else {
 		return errors.New("porcupine failed")

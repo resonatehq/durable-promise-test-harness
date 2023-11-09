@@ -13,7 +13,7 @@ var (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "load",
+		Use:     "run",
 		Short:   "run a load test with multiple concurrent clients",
 		Example: "harness load -a http://0.0.0.0:8001/ -c 10 -r 1000",
 		Run: func(cmd *cobra.Command, args []string) {
