@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anishathalye/porcupine"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/checker"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
@@ -165,6 +166,7 @@ func NewLoadTestCase(s *store.Store, cs []*Client, g *Generator) TestCase {
 func (t *LoadTestCase) Run() error {
 	defer func() {
 		checker.NewVisualizer().Visualize(t.Store.History())
+		// checker.PorcupineVisualize(t.Store.History())
 	}()
 
 	ctx := context.Background()
@@ -190,7 +192,12 @@ func (t *LoadTestCase) Run() error {
 	close(results)
 	<-t.Store.Done
 
-	return nil
+	if porcupine.CheckEvents(checker.PorcupineModel, checker.MakePorcupineEvents(t.Store.History())) {
+		fmt.Println("porcupine passed!")
+		return nil
+	} else {
+		return errors.New("porcupine failed")
+	}
 }
 
 type SingleTestCase struct {
