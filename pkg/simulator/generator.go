@@ -46,10 +46,8 @@ func NewGenerator(config *GeneratorConfig) *Generator {
 	}
 }
 
-func (g *Generator) Generate() []store.Operation {
+func (g *Generator) Generate(clientId int) []store.Operation {
 	ops := []store.Operation{}
-
-	clientId := int(uuid.New().ID())
 
 	generators := []OpGenerator{
 		g.GenerateSearchPromise,

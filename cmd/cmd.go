@@ -14,7 +14,7 @@ func New() *cobra.Command {
 
 	groups := utils.CommandGroups{
 		{
-			Message: "Load test commands",
+			Message: "verification commands",
 			Commands: []*cobra.Command{
 				verify.NewCmd(),
 			},

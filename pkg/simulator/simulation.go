@@ -73,7 +73,7 @@ func (s *Simulation) Verify() error {
 
 	clients := make([]*Client, 0)
 	for i := 0; i < s.config.NumClients; i++ {
-		client, err := NewClient(s.config.Addr)
+		client, err := NewClient(i, s.config.Addr)
 		if err != nil {
 			return err
 		}
@@ -120,10 +120,6 @@ func NewTestCase(s *store.Store, cs []*Client, g *Generator, ch *checker.Checker
 }
 
 func (t *TestCase) Run() error {
-	defer func() {
-		t.Checker.Visualize(t.Store.History())
-	}()
-
 	ctx := context.Background()
 	results := make(chan store.Operation, len(t.Clients))
 
@@ -138,7 +134,7 @@ func (t *TestCase) Run() error {
 
 		go func(client *Client) {
 			defer wg.Done()
-			ops := t.Generator.Generate()
+			ops := t.Generator.Generate(client.ID)
 			for _, op := range ops {
 				results <- client.Invoke(ctx, op)
 			}

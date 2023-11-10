@@ -45,7 +45,7 @@ The `Durable Promise Server` implements the core [Durable Promise Specification]
    ./harness verify -a http://0.0.0.0:8001/ -r 1000 -c 3
    ```
 
-NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<date>` for later review.
+NOTE: the history, analysis, and any supplementary results are written to the filesystem under `test/results/<date>/` for later review.
 
 ## Design Decisions 
 

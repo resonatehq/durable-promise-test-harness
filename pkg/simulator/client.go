@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"time"
 
@@ -18,13 +17,13 @@ type Client struct {
 	client openapi.ClientInterface
 }
 
-func NewClient(conn string) (*Client, error) {
+func NewClient(id int, conn string) (*Client, error) {
 	c, err := openapi.NewClientWithResponses(conn)
 	if err != nil {
 		return nil, err
 	}
 	return &Client{
-		ID:     rand.Intn(500),
+		ID:     id,
 		client: c,
 	}, nil
 }

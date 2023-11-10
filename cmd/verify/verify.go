@@ -30,7 +30,7 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&addr, "addr", "a", "http://0.0.0.0:8001/", "address of durable-promise server")
+	cmd.Flags().StringVarP(&addr, "addr", "a", "http://0.0.0.0:8001/", "address of durable promise server")
 	cmd.Flags().IntVarP(&clients, "clients", "c", 1, "number of clients")
 	cmd.Flags().IntVarP(&requests, "requests", "r", 1, "number of requests per client")
 

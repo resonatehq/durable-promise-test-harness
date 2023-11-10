@@ -1,10 +1,13 @@
 package checker
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/anishathalye/porcupine"
+	"github.com/resonatehq/durable-promise-test-harness/pkg/openapi"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/store"
+	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 )
 
 // newPorcupineModel is being used as a wrapper around the model for its functionality.
@@ -29,7 +32,23 @@ func newPorcupineModel() porcupine.Model {
 			return reflect.DeepEqual(s1, s2)
 		},
 		DescribeOperation: func(input interface{}, output interface{}) string {
-			return input.(event).API.String()
+			in := input.(event)
+
+			var param interface{}
+			switch v := in.value.(type) {
+			case *openapi.SearchPromisesParams:
+				param = utils.SafeDereference(v.State)
+			case string:
+				param = v
+			case *openapi.CreatePromiseRequest:
+				param = utils.SafeDereference(v.Id)
+			case *openapi.CompletePromiseRequestWrapper:
+				param = utils.SafeDereference(v.Id)
+			default:
+				return ""
+			}
+
+			return fmt.Sprintf("%s(%v)", in.API.String(), param)
 		},
 		DescribeState: func(state interface{}) string {
 			return state.(State).String()

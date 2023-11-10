@@ -19,18 +19,32 @@ func NewVisualizer() *Visualizer {
 }
 
 // renders timeline of history and performance analysis
-func (v *Visualizer) Visualize(history []store.Operation) error {
+func (v *Visualizer) Summary(pass bool, today string, history []store.Operation) error {
+	summary := v.summary(pass)
 	performance := v.performance(history)
-	content := performance + "\n" + v.timeline(history)
-	today := time.Now().Format("01-02-2006_15-04-05")
-	err := utils.WriteStringToFile(content, fmt.Sprintf("test/results/%s", today))
+	timeline := v.timeline(history)
+
+	content := summary + "\n" + performance + "\n" + timeline
+	err := utils.WriteStringToFile(content, fmt.Sprintf("test/results/%s/summary.txt", today))
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(performance)
+	fmt.Println(summary + "\n" + performance)
 
 	return nil
+}
+
+func (v *Visualizer) summary(pass bool) string {
+	out := "PASS"
+	if !pass {
+		out = "FAIL"
+	}
+	build := strings.Builder{}
+	build.WriteString("Summary\n")
+	build.WriteString("=====================\n")
+	build.WriteString(fmt.Sprintf("Linearizability Check: %s\n", out))
+	return build.String()
 }
 
 func (v *Visualizer) timeline(history []store.Operation) string {
@@ -53,11 +67,6 @@ func (v *Visualizer) performance(history []store.Operation) string {
 	}
 
 	build := strings.Builder{}
-	// Summary
-	build.WriteString("Summary\n")
-	build.WriteString("=====================\n")
-	build.WriteString("Linearizability Check: PASS\n") // don't make this fixed
-	build.WriteString("\n")
 
 	// Requests
 	build.WriteString("Requests:\n")
@@ -83,7 +92,7 @@ func (v *Visualizer) performance(history []store.Operation) string {
 	build.WriteString("\n")
 
 	// Status codes
-	build.WriteString("Status Code Distribution:\n") // TODO: average resposne time
+	build.WriteString("Status Code Distribution:\n")
 	statusCodes := calculateStatusCodeDistribution(history)
 	for code := range statusCodes {
 		build.WriteString(fmt.Sprintf("  %d: %d responses\n", code, statusCodes[code]))
