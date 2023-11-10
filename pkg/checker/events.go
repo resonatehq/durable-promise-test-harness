@@ -101,21 +101,3 @@ func (t timeSortedEvent) Less(i, j int) bool {
 	// if the timestamps are the same, we need to make sure we order calls before returns
 	return t[i].kind == callEvent && t[j].kind == returnEvent
 }
-
-type eventIterator struct {
-	index  int
-	events []event
-}
-
-func newEventIterator(events []event) *eventIterator {
-	return &eventIterator{index: 0, events: events}
-}
-
-func (ei *eventIterator) Next() (event, event, bool) {
-	if ei.index+1 < len(ei.events) {
-		in, out := ei.events[ei.index], ei.events[ei.index+1]
-		ei.index += 2
-		return in, out, true
-	}
-	return event{}, event{}, false
-}

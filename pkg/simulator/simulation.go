@@ -3,8 +3,9 @@ package simulator
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/resonatehq/durable-promise-test-harness/pkg/checker"
@@ -22,24 +23,23 @@ func NewSimulation(config *SimulationConfig) *Simulation {
 	}
 }
 
-func (s *Simulation) Load() error {
-	return nil
-}
-
-func (s *Simulation) Multiple() error {
-	return nil
-}
-
-func (s *Simulation) Single() error {
-	if err := s.setupSuite(); err != nil {
-		return err
+func (s *Simulation) Run() error {
+	if err := s.SetupSuite(); err != nil {
+		return fmt.Errorf("error setting up suite: %v", err)
 	}
 
-	return s.testSingleClientCorrectness()
+	if err := s.Verify(); err != nil {
+		return fmt.Errorf("error running test: %v", err)
+	}
+
+	if err := s.TearDownSuite(); err != nil {
+		return fmt.Errorf("error tearing down suite: %v", err)
+	}
+
+	return nil
 }
 
-func (s *Simulation) setupSuite() error {
-	log.Printf("testing server readiness at %s\n", s.config.Addr)
+func (s *Simulation) SetupSuite() error {
 	var ready bool
 	for i := 0; i < 10; i++ {
 		if utils.IsReady(s.config.Addr) {
@@ -53,26 +53,31 @@ func (s *Simulation) setupSuite() error {
 	if !ready {
 		return errors.New("server did not become ready in time")
 	}
+
 	return nil
 }
 
-func (s *Simulation) tearDownSuite() error {
+func (s *Simulation) TearDownSuite() error {
 	return nil
 }
 
-func (s *Simulation) testSingleClientCorrectness() error {
+func (s *Simulation) Verify() error {
 	defer func() {
 		if r := recover(); r != nil {
-			s.tearDownSuite()
+			s.TearDownSuite()
 			panic(r)
 		}
 	}()
 
 	localStore := store.NewStore()
 
-	client, err := NewClient(s.config.Addr)
-	if err != nil {
-		panic(err)
+	clients := make([]*Client, 0)
+	for i := 0; i < s.config.NumClients; i++ {
+		client, err := NewClient(i, s.config.Addr)
+		if err != nil {
+			return err
+		}
+		clients = append(clients, client)
 	}
 
 	generator := NewGenerator(&GeneratorConfig{
@@ -84,9 +89,9 @@ func (s *Simulation) testSingleClientCorrectness() error {
 
 	checker := checker.NewChecker()
 
-	test := NewSingleTestCase(
+	test := NewTestCase(
 		localStore,
-		client,
+		clients,
 		generator,
 		checker,
 	)
@@ -98,48 +103,48 @@ func (s *Simulation) testSingleClientCorrectness() error {
 	return nil
 }
 
-type TestCase interface {
-	Run() error
-}
-
-type LoadTestCase struct{}
-
-func NewLoadTestCase() TestCase { return nil }
-
-type MultipleTestCase struct{}
-
-func NewMultipleTestCase() TestCase { return nil }
-
-type SingleTestCase struct {
+type TestCase struct {
 	Store     *store.Store
-	Client    *Client
+	Clients   []*Client
 	Generator *Generator
 	Checker   *checker.Checker
 }
 
-func NewSingleTestCase(s *store.Store, c *Client, g *Generator, ch *checker.Checker) TestCase {
-	return &SingleTestCase{
+func NewTestCase(s *store.Store, cs []*Client, g *Generator, ch *checker.Checker) *TestCase {
+	return &TestCase{
 		Store:     s,
-		Client:    c,
+		Clients:   cs,
 		Generator: g,
 		Checker:   ch,
 	}
 }
 
-func (t *SingleTestCase) Run() error {
-	defer func() {
-		t.Checker.Visualize(t.Store.History())
+func (t *TestCase) Run() error {
+	ctx := context.Background()
+	results := make(chan store.Operation, len(t.Clients))
+
+	go func() {
+		t.Store.Run(results)
 	}()
 
-	ctx := context.Background()
-	ops := t.Generator.Generate()
-	for _, op := range ops {
-		t.Store.Add(t.Client.Invoke(ctx, op))
+	var wg sync.WaitGroup
+	wg.Add(len(t.Clients))
+
+	for _, c := range t.Clients {
+
+		go func(client *Client) {
+			defer wg.Done()
+			ops := t.Generator.Generate(client.ID)
+			for _, op := range ops {
+				results <- client.Invoke(ctx, op)
+			}
+		}(c)
+
 	}
+	wg.Wait()
+
+	close(results)
+	<-t.Store.Done
 
 	return t.Checker.Check(t.Store.History())
 }
-
-//
-// utils
-//

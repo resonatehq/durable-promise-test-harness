@@ -3,6 +3,7 @@ module github.com/resonatehq/durable-promise-test-harness
 go 1.21.3
 
 require (
+	github.com/anishathalye/porcupine v0.1.5
 	github.com/google/uuid v1.4.0
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/oapi-codegen/runtime v1.0.0

@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"github.com/resonatehq/durable-promise-test-harness/cmd/linearize"
-	"github.com/resonatehq/durable-promise-test-harness/cmd/load"
+	"github.com/resonatehq/durable-promise-test-harness/cmd/verify"
 	"github.com/resonatehq/durable-promise-test-harness/pkg/utils"
 	"github.com/spf13/cobra"
 )
@@ -15,15 +14,9 @@ func New() *cobra.Command {
 
 	groups := utils.CommandGroups{
 		{
-			Message: "Linearizability test commands",
+			Message: "verification commands",
 			Commands: []*cobra.Command{
-				linearize.NewCmd(),
-			},
-		},
-		{
-			Message: "Load test commands",
-			Commands: []*cobra.Command{
-				load.NewCmd(),
+				verify.NewCmd(),
 			},
 		},
 	}

@@ -1,0 +1,127 @@
+Summary
+=====================
+Linearizability Check: FAIL
+
+Requests:
+  Total: 125.956833ms
+  Slowest: 22.3575ms
+  Fastest: 368.209µs
+  Average: 12.76542ms
+  Requests/Sec: 396.96
+
+Data:
+  Total Data: 0.0018 MB
+  Size/Sec: 0.0145 MB
+
+Latency Distribution:
+  p50: 11.381083ms
+  p75: 21.850333ms
+  p95: 22.185875ms
+  p99: 22.3575ms
+
+Status Code Distribution:
+  200: 14 responses
+  403: 8 responses
+  404: 28 responses
+
+Event History:
+  Event(id=323806044, clientId=1, kind=CALL, api=GET, value="6", time=2023-11-09 22:05:33.911118 -0500 EST m=+0.002065168, status=INVOKE, code=-1)
+  Event(id=735008556, clientId=4, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:33.911119 -0500 EST m=+0.002067084, status=INVOKE, code=-1)
+  Event(id=3938048334, clientId=2, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:33.911258 -0500 EST m=+0.002205376, status=INVOKE, code=-1)
+  Event(id=2057064613, clientId=3, kind=CALL, api=REJECT, value={"Id":"19","Request":{"value":{"data":"NDA="}}}, time=2023-11-09 22:05:33.911346 -0500 EST m=+0.002293376, status=INVOKE, code=-1)
+  Event(id=3071479892, clientId=0, kind=CALL, api=REJECT, value={"Id":"9","Request":{"value":{"data":""}}}, time=2023-11-09 22:05:33.911802 -0500 EST m=+0.002749876, status=INVOKE, code=-1)
+  Event(id=735008556, clientId=4, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:33.924143 -0500 EST m=+0.015090543, status=OK, code=200)
+  Event(id=910720277, clientId=4, kind=CALL, api=REJECT, value={"Id":"88","Request":{"value":{"data":"NjQ="}}}, time=2023-11-09 22:05:33.924303 -0500 EST m=+0.015250459, status=INVOKE, code=-1)
+  Event(id=2057064613, clientId=3, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:33.924601 -0500 EST m=+0.015548876, status=FAIL, code=404)
+  Event(id=416918712, clientId=3, kind=CALL, api=CANCEL, value={"Id":"23","Request":{"value":{"data":"NDc="}}}, time=2023-11-09 22:05:33.924616 -0500 EST m=+0.015563501, status=INVOKE, code=-1)
+  Event(id=3938048334, clientId=2, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:33.924642 -0500 EST m=+0.015590043, status=OK, code=200)
+  Event(id=3071479892, clientId=0, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:33.924654 -0500 EST m=+0.015601959, status=FAIL, code=404)
+  Event(id=2980766033, clientId=2, kind=CALL, api=CREATE, value={"id":"88","param":{"data":"Mzc="},"timeout":2524608000000}, time=2023-11-09 22:05:33.924673 -0500 EST m=+0.015620626, status=INVOKE, code=-1)
+  Event(id=4181767911, clientId=0, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:33.924685 -0500 EST m=+0.015632751, status=INVOKE, code=-1)
+  Event(id=323806044, clientId=1, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:33.924687 -0500 EST m=+0.015634584, status=FAIL, code=404)
+  Event(id=3010272736, clientId=1, kind=CALL, api=REJECT, value={"Id":"96","Request":{"value":{"data":""}}}, time=2023-11-09 22:05:33.924718 -0500 EST m=+0.015665251, status=INVOKE, code=-1)
+  Event(id=910720277, clientId=4, kind=RETURN, api=REJECT, value={"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}, time=2023-11-09 22:05:33.924924 -0500 EST m=+0.015871293, status=FAIL, code=403)
+  Event(id=4174312331, clientId=4, kind=CALL, api=REJECT, value={"Id":"48","Request":{"value":{"data":"NzY="}}}, time=2023-11-09 22:05:33.924947 -0500 EST m=+0.015894126, status=INVOKE, code=-1)
+  Event(id=416918712, clientId=3, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:33.935202 -0500 EST m=+0.026149209, status=FAIL, code=404)
+  Event(id=2980766033, clientId=2, kind=RETURN, api=CREATE, value={"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}, time=2023-11-09 22:05:33.935207 -0500 EST m=+0.026155043, status=FAIL, code=403)
+  Event(id=234041987, clientId=3, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:33.935209 -0500 EST m=+0.026156459, status=INVOKE, code=-1)
+  Event(id=4181767911, clientId=0, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:33.935234 -0500 EST m=+0.026181168, status=OK, code=200)
+  Event(id=2169039065, clientId=2, kind=CALL, api=RESOLVE, value={"Id":"19","Request":{"value":{"data":"NTA="}}}, time=2023-11-09 22:05:33.935234 -0500 EST m=+0.026181251, status=INVOKE, code=-1)
+  Event(id=1898095330, clientId=0, kind=CALL, api=CANCEL, value={"Id":"6","Request":{"value":{"data":"Mzc="}}}, time=2023-11-09 22:05:33.93526 -0500 EST m=+0.026207209, status=INVOKE, code=-1)
+  Event(id=3010272736, clientId=1, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:33.935441 -0500 EST m=+0.026388543, status=FAIL, code=404)
+  Event(id=2969049312, clientId=1, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:33.935446 -0500 EST m=+0.026393543, status=INVOKE, code=-1)
+  Event(id=4174312331, clientId=4, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:33.935466 -0500 EST m=+0.026414001, status=FAIL, code=404)
+  Event(id=1460911589, clientId=4, kind=CALL, api=REJECT, value={"Id":"68","Request":{"value":{"data":"MzM="}}}, time=2023-11-09 22:05:33.935473 -0500 EST m=+0.026420668, status=INVOKE, code=-1)
+  Event(id=1898095330, clientId=0, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:33.935628 -0500 EST m=+0.026575418, status=FAIL, code=404)
+  Event(id=1987673664, clientId=0, kind=CALL, api=CREATE, value={"id":"32","param":{"data":"MTM="},"timeout":2524608000000}, time=2023-11-09 22:05:33.935632 -0500 EST m=+0.026579501, status=INVOKE, code=-1)
+  Event(id=234041987, clientId=3, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:33.946362 -0500 EST m=+0.037309168, status=OK, code=200)
+  Event(id=2169039065, clientId=2, kind=RETURN, api=RESOLVE, value={}, time=2023-11-09 22:05:33.946361 -0500 EST m=+0.037309209, status=FAIL, code=404)
+  Event(id=1691355637, clientId=2, kind=CALL, api=CANCEL, value={"Id":"94","Request":{"value":{"data":"Nzg="}}}, time=2023-11-09 22:05:33.946372 -0500 EST m=+0.037319543, status=INVOKE, code=-1)
+  Event(id=496902113, clientId=3, kind=CALL, api=GET, value="72", time=2023-11-09 22:05:33.946377 -0500 EST m=+0.037324543, status=INVOKE, code=-1)
+  Event(id=2969049312, clientId=1, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:33.957452 -0500 EST m=+0.048399459, status=OK, code=200)
+  Event(id=2495128920, clientId=1, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:33.957471 -0500 EST m=+0.048419126, status=INVOKE, code=-1)
+  Event(id=1987673664, clientId=0, kind=RETURN, api=CREATE, value={"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:33.957482 -0500 EST m=+0.048429834, status=FAIL, code=403)
+  Event(id=4188489381, clientId=0, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:33.957498 -0500 EST m=+0.048446043, status=INVOKE, code=-1)
+  Event(id=1460911589, clientId=4, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:33.957503 -0500 EST m=+0.048450959, status=FAIL, code=404)
+  Event(id=1129350460, clientId=4, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:33.95751 -0500 EST m=+0.048457959, status=INVOKE, code=-1)
+  Event(id=496902113, clientId=3, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:33.95773 -0500 EST m=+0.048678126, status=FAIL, code=404)
+  Event(id=2627781655, clientId=3, kind=CALL, api=CANCEL, value={"Id":"22","Request":{"value":{"data":"MTM="}}}, time=2023-11-09 22:05:33.957736 -0500 EST m=+0.048684043, status=INVOKE, code=-1)
+  Event(id=1691355637, clientId=2, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:33.957745 -0500 EST m=+0.048693126, status=FAIL, code=404)
+  Event(id=695137999, clientId=2, kind=CALL, api=CREATE, value={"id":"30","param":{"data":""},"timeout":2524608000000}, time=2023-11-09 22:05:33.957751 -0500 EST m=+0.048698251, status=INVOKE, code=-1)
+  Event(id=4188489381, clientId=0, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:33.968618 -0500 EST m=+0.059565543, status=OK, code=200)
+  Event(id=1129350460, clientId=4, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:33.968635 -0500 EST m=+0.059583001, status=OK, code=200)
+  Event(id=2139050177, clientId=0, kind=CALL, api=CANCEL, value={"Id":"59","Request":{"value":{"data":""}}}, time=2023-11-09 22:05:33.968646 -0500 EST m=+0.059593626, status=INVOKE, code=-1)
+  Event(id=1384107759, clientId=4, kind=CALL, api=RESOLVE, value={"Id":"57","Request":{"value":{"data":"OTQ="}}}, time=2023-11-09 22:05:33.968651 -0500 EST m=+0.059598418, status=INVOKE, code=-1)
+  Event(id=2495128920, clientId=1, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:33.979739 -0500 EST m=+0.070686334, status=OK, code=200)
+  Event(id=3365933858, clientId=1, kind=CALL, api=CREATE, value={"id":"50","param":{"data":"NDc="},"timeout":2524608000000}, time=2023-11-09 22:05:33.979752 -0500 EST m=+0.070699459, status=INVOKE, code=-1)
+  Event(id=695137999, clientId=2, kind=RETURN, api=CREATE, value={"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:33.979764 -0500 EST m=+0.070712251, status=FAIL, code=403)
+  Event(id=2627781655, clientId=3, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:33.979768 -0500 EST m=+0.070716084, status=FAIL, code=404)
+  Event(id=2616688451, clientId=3, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:33.979774 -0500 EST m=+0.070721376, status=INVOKE, code=-1)
+  Event(id=677220324, clientId=2, kind=CALL, api=CANCEL, value={"Id":"78","Request":{"value":{"data":"NDc="}}}, time=2023-11-09 22:05:33.979774 -0500 EST m=+0.070722084, status=INVOKE, code=-1)
+  Event(id=1384107759, clientId=4, kind=RETURN, api=RESOLVE, value={}, time=2023-11-09 22:05:33.980025 -0500 EST m=+0.070972334, status=FAIL, code=404)
+  Event(id=2139050177, clientId=0, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:33.980027 -0500 EST m=+0.070974709, status=FAIL, code=404)
+  Event(id=3735956776, clientId=4, kind=CALL, api=GET, value="0", time=2023-11-09 22:05:33.98003 -0500 EST m=+0.070977418, status=INVOKE, code=-1)
+  Event(id=2674941315, clientId=0, kind=CALL, api=CREATE, value={"id":"80","param":{"data":""},"timeout":2524608000000}, time=2023-11-09 22:05:33.980032 -0500 EST m=+0.070980209, status=INVOKE, code=-1)
+  Event(id=3365933858, clientId=1, kind=RETURN, api=CREATE, value={"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:33.990776 -0500 EST m=+0.081723793, status=FAIL, code=403)
+  Event(id=346885516, clientId=1, kind=CALL, api=SEARCH, value={"q":"*","state":"RESOLVED"}, time=2023-11-09 22:05:33.990785 -0500 EST m=+0.081733168, status=INVOKE, code=-1)
+  Event(id=677220324, clientId=2, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:34.001881 -0500 EST m=+0.092829001, status=FAIL, code=404)
+  Event(id=1313486215, clientId=2, kind=CALL, api=REJECT, value={"Id":"81","Request":{"value":{"data":""}}}, time=2023-11-09 22:05:34.001887 -0500 EST m=+0.092834876, status=INVOKE, code=-1)
+  Event(id=2674941315, clientId=0, kind=RETURN, api=CREATE, value={"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:34.001936 -0500 EST m=+0.092883834, status=FAIL, code=403)
+  Event(id=3735956776, clientId=4, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:34.001942 -0500 EST m=+0.092889751, status=FAIL, code=404)
+  Event(id=3338443195, clientId=0, kind=CALL, api=CANCEL, value={"Id":"28","Request":{"value":{"data":"Mzk="}}}, time=2023-11-09 22:05:34.001948 -0500 EST m=+0.092895584, status=INVOKE, code=-1)
+  Event(id=625890051, clientId=4, kind=CALL, api=GET, value="44", time=2023-11-09 22:05:34.001948 -0500 EST m=+0.092896376, status=INVOKE, code=-1)
+  Event(id=2616688451, clientId=3, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:34.001959 -0500 EST m=+0.092907251, status=OK, code=200)
+  Event(id=1387188802, clientId=3, kind=CALL, api=CREATE, value={"id":"92","param":{"data":"MjA="},"timeout":2524608000000}, time=2023-11-09 22:05:34.002028 -0500 EST m=+0.092976168, status=INVOKE, code=-1)
+  Event(id=346885516, clientId=1, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-09 22:05:34.002278 -0500 EST m=+0.093225418, status=OK, code=200)
+  Event(id=2638054795, clientId=1, kind=CALL, api=SEARCH, value={"q":"*","state":"RESOLVED"}, time=2023-11-09 22:05:34.002297 -0500 EST m=+0.093245043, status=INVOKE, code=-1)
+  Event(id=1313486215, clientId=2, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:34.002568 -0500 EST m=+0.093516251, status=FAIL, code=404)
+  Event(id=3338443195, clientId=0, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:34.002571 -0500 EST m=+0.093519084, status=FAIL, code=404)
+  Event(id=3984319845, clientId=2, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:34.002575 -0500 EST m=+0.093522709, status=INVOKE, code=-1)
+  Event(id=2662952923, clientId=0, kind=CALL, api=CREATE, value={"id":"47","param":{"data":""},"timeout":2524608000000}, time=2023-11-09 22:05:34.002579 -0500 EST m=+0.093527001, status=INVOKE, code=-1)
+  Event(id=625890051, clientId=4, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:34.003095 -0500 EST m=+0.094043376, status=FAIL, code=404)
+  Event(id=2167066805, clientId=4, kind=CALL, api=SEARCH, value={"q":"*","state":"REJECTED"}, time=2023-11-09 22:05:34.003102 -0500 EST m=+0.094049626, status=INVOKE, code=-1)
+  Event(id=2638054795, clientId=1, kind=RETURN, api=SEARCH, value={"promises":[]}, time=2023-11-09 22:05:34.013779 -0500 EST m=+0.104727209, status=OK, code=200)
+  Event(id=2662952923, clientId=0, kind=RETURN, api=CREATE, value={"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:34.013786 -0500 EST m=+0.104734043, status=FAIL, code=403)
+  Event(id=1387188802, clientId=3, kind=RETURN, api=CREATE, value={"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}}, time=2023-11-09 22:05:34.013793 -0500 EST m=+0.104741126, status=FAIL, code=403)
+  Event(id=2523667844, clientId=1, kind=CALL, api=REJECT, value={"Id":"64","Request":{"value":{"data":"Mzk="}}}, time=2023-11-09 22:05:34.013793 -0500 EST m=+0.104741376, status=INVOKE, code=-1)
+  Event(id=3462343039, clientId=0, kind=CALL, api=CANCEL, value={"Id":"37","Request":{"value":{"data":"MTA="}}}, time=2023-11-09 22:05:34.013805 -0500 EST m=+0.104752751, status=INVOKE, code=-1)
+  Event(id=177148462, clientId=3, kind=CALL, api=RESOLVE, value={"Id":"28","Request":{"value":{"data":"Njk="}}}, time=2023-11-09 22:05:34.013837 -0500 EST m=+0.104785418, status=INVOKE, code=-1)
+  Event(id=3984319845, clientId=2, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:34.014518 -0500 EST m=+0.105466043, status=OK, code=200)
+  Event(id=3347804091, clientId=2, kind=CALL, api=CANCEL, value={"Id":"78","Request":{"value":{"data":""}}}, time=2023-11-09 22:05:34.014537 -0500 EST m=+0.105484584, status=INVOKE, code=-1)
+  Event(id=2167066805, clientId=4, kind=RETURN, api=SEARCH, value={"promises":[{"completedOn":1699584795875,"createdOn":1699584795853,"id":"88","param":{"data":"Mzc="},"state":"REJECTED","timeout":2524608000000,"value":{"data":"NjQ="}}]}, time=2023-11-09 22:05:34.014547 -0500 EST m=+0.105494543, status=OK, code=200)
+  Event(id=2575734958, clientId=4, kind=CALL, api=SEARCH, value={"q":"*","state":"PENDING"}, time=2023-11-09 22:05:34.014565 -0500 EST m=+0.105513418, status=INVOKE, code=-1)
+  Event(id=3462343039, clientId=0, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:34.014827 -0500 EST m=+0.105775001, status=FAIL, code=404)
+  Event(id=2523667844, clientId=1, kind=RETURN, api=REJECT, value={}, time=2023-11-09 22:05:34.014828 -0500 EST m=+0.105775584, status=FAIL, code=404)
+  Event(id=1636641409, clientId=1, kind=CALL, api=RESOLVE, value={"Id":"49","Request":{"value":{"data":"NTc="}}}, time=2023-11-09 22:05:34.014835 -0500 EST m=+0.105783459, status=INVOKE, code=-1)
+  Event(id=177148462, clientId=3, kind=RETURN, api=RESOLVE, value={}, time=2023-11-09 22:05:34.0149 -0500 EST m=+0.105848168, status=FAIL, code=404)
+  Event(id=1064731995, clientId=3, kind=CALL, api=CANCEL, value={"Id":"20","Request":{"value":{"data":"NDU="}}}, time=2023-11-09 22:05:34.014919 -0500 EST m=+0.105866751, status=INVOKE, code=-1)
+  Event(id=3347804091, clientId=2, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:34.025455 -0500 EST m=+0.116403084, status=FAIL, code=404)
+  Event(id=753596371, clientId=2, kind=CALL, api=GET, value="84", time=2023-11-09 22:05:34.025503 -0500 EST m=+0.116451418, status=INVOKE, code=-1)
+  Event(id=1636641409, clientId=1, kind=RETURN, api=RESOLVE, value={}, time=2023-11-09 22:05:34.036887 -0500 EST m=+0.127835334, status=FAIL, code=404)
+  Event(id=2575734958, clientId=4, kind=RETURN, api=SEARCH, value={"promises":[{"createdOn":1699584795979,"id":"47","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795944,"id":"80","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795920,"id":"92","param":{"data":"MjA="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795909,"id":"30","param":{},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795875,"id":"32","param":{"data":"MTM="},"state":"PENDING","timeout":2524608000000,"value":{}},{"createdOn":1699584795864,"id":"50","param":{"data":"NDc="},"state":"PENDING","timeout":2524608000000,"value":{}}]}, time=2023-11-09 22:05:34.036923 -0500 EST m=+0.127870918, status=OK, code=200)
+  Event(id=1515644317, clientId=1, kind=CALL, api=GET, value="87", time=2023-11-09 22:05:34.036924 -0500 EST m=+0.127872459, status=INVOKE, code=-1)
+  Event(id=1064731995, clientId=3, kind=RETURN, api=CANCEL, value={}, time=2023-11-09 22:05:34.037057 -0500 EST m=+0.128005043, status=FAIL, code=404)
+  Event(id=1570139100, clientId=3, kind=CALL, api=GET, value="31", time=2023-11-09 22:05:34.037074 -0500 EST m=+0.128022001, status=INVOKE, code=-1)
+  Event(id=753596371, clientId=2, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:34.037445 -0500 EST m=+0.128393501, status=FAIL, code=404)
+  Event(id=1515644317, clientId=1, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:34.047732 -0500 EST m=+0.138679793, status=FAIL, code=404)
+  Event(id=1570139100, clientId=3, kind=RETURN, api=GET, value={}, time=2023-11-09 22:05:34.058897 -0500 EST m=+0.149845543, status=FAIL, code=404)

@@ -1,23 +1,23 @@
 package store
 
-import "sync"
-
 type Store struct {
-	mu      sync.Mutex
+	Done    chan struct{}
 	history []Operation
 }
 
 func NewStore() *Store {
 	return &Store{
-		mu:      sync.Mutex{},
+		Done:    make(chan struct{}),
 		history: make([]Operation, 0),
 	}
 }
 
-func (s *Store) Add(op Operation) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.history = append(s.history, op)
+func (s *Store) Run(results <-chan Operation) {
+	for op := range results {
+		s.history = append(s.history, op)
+	}
+
+	s.Done <- struct{}{}
 }
 
 func (s *Store) History() []Operation {
