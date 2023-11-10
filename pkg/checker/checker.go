@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -47,5 +48,8 @@ func (c *Checker) Check(history []store.Operation) error {
 
 	c.Summary(pass, today, history)
 
+	if !pass {
+		return errors.New("history is not linearizable, check results for more details")
+	}
 	return nil
 }
