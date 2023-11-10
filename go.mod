@@ -1,6 +1,6 @@
 module github.com/resonatehq/durable-promise-test-harness
 
-go 1.21.3
+go 1.21
 
 require (
 	github.com/anishathalye/porcupine v0.1.5
