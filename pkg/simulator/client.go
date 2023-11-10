@@ -151,6 +151,10 @@ func invoke[T any](ctx context.Context, op store.Operation, call func() (*http.R
 		return op
 	}
 
+	if resp.StatusCode == http.StatusInternalServerError {
+		fmt.Printf("GOT SERVER ERROR: %v", string(b))
+	}
+
 	var out T
 	err = json.Unmarshal(b, &out)
 	if err != nil {
