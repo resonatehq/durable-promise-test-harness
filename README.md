@@ -54,7 +54,7 @@ NOTE: the history, analysis, and any supplementary results are written to the fi
 Each event loop generates N operations in a batch per client. Each client executes the operations one by one, storing their results. The checker then checks all of the results in a batch.
 
 <p align="center">
-    <img src="./assets/event_loop.png" height=400>
+    <img src="./assets/conceptual.png" height=400>
 </p>
 
 ## Contributions
