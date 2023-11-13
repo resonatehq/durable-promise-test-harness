@@ -51,31 +51,11 @@ NOTE: the history, analysis, and any supplementary results are written to the fi
 
 ### Event Loop 
 
-generate everything in batch, execute one by one, check everything in batch
-
-The test harness' event loop waits generates, the loop dispatches the entire queue of operations 
-to the appropriate client to be processed. 
-
-
-The harness's event loop keeps running as long as their are new events to process are an invalid 
-event has occurred: 
-- The loop checks for new events, like a call to the promise api. 
-- When an event is found, the loop dispatches it to the model to take step. 
-- The loop continues running and keeps checking for new events. 
-
-
-Some common event loops: 
-- Node.js event loop - Waits for events like incoming HTTP requests, filesystem events, timed events etc and send them to callback functions. 
-
-In this repo the event loop: 
+Each event loop generates N operations in a batch per client. Each client executes the operations one by one, storing their results. The checker then checks all of the results in a batch.
 
 <p align="center">
-    <img src="./assets/event_loop.png">
+    <img src="./assets/event_loop.png" height=400>
 </p>
-
-### Requests (Table) 
-
-### Clocks 
 
 ## Contributions
 
