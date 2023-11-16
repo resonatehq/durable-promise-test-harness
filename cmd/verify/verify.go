@@ -23,7 +23,6 @@ func NewCmd() *cobra.Command {
 				Addr:        addr,
 				NumClients:  clients,
 				NumRequests: requests,
-				Mode:        simulator.Load,
 			})
 
 			if err := sim.Run(); err != nil {
