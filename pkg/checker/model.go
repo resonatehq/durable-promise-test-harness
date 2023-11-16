@@ -202,7 +202,7 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	if resp.status == store.Fail {
 		switch resp.code {
 		case http.StatusForbidden:
-			if state.Completed(*reqObj.Id) || isErrorResponse(respObj) || isTimedOut(*respObj.State) { // HERE -- fix this
+			if state.Completed(*reqObj.Id) || isErrorResponse(respObj) || isTimedOut(*respObj.State) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
