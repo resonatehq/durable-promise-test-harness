@@ -157,7 +157,7 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	}
 
 	if resp.status == store.Fail {
-		if resp.code == http.StatusForbidden && state.Exists(*reqObj.Id) {
+		if resp.code == http.StatusConflict && state.Exists(*reqObj.Id) {
 			return state, nil
 		}
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
@@ -202,7 +202,7 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	if resp.status == store.Fail {
 		switch resp.code {
 		case http.StatusForbidden:
-			if state.Completed(*reqObj.Id) || isTimedOut(*respObj.State) { // HERE
+			if state.Completed(*reqObj.Id) || isErrorResponse(respObj) || isTimedOut(*respObj.State) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
@@ -393,4 +393,12 @@ func deepEqualPromise(state State, local, external *openapi.Promise) error {
 	}
 
 	return nil
+}
+
+// hack for now to check if received error response
+func isErrorResponse(respObj *openapi.Promise) bool {
+	if respObj.Id == nil && respObj.State == nil && respObj.Timeout == nil {
+		return true
+	}
+	return false
 }
