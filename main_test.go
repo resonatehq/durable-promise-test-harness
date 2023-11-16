@@ -11,8 +11,8 @@ func TestHarness(t *testing.T) {
 	t.Run("TestHarness", func(t *testing.T) {
 		sim := simulator.NewSimulation(&simulator.SimulationConfig{
 			Addr:        "http://0.0.0.0:8001/",
-			NumClients:  10,
-			NumRequests: 1,
+			NumClients:  1000,
+			NumRequests: 10,
 		})
 
 		t.Log("Starting")
