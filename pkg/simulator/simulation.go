@@ -131,14 +131,13 @@ func (t *TestCase) Run() error {
 	wg.Add(len(t.Clients))
 
 	for _, c := range t.Clients {
-
-		go func(client *Client) {
+		ops := t.Generator.Generate(c.ID)
+		go func(client *Client, ops []store.Operation) {
 			defer wg.Done()
-			ops := t.Generator.Generate(client.ID)
 			for _, op := range ops {
 				results <- client.Invoke(ctx, op)
 			}
-		}(c)
+		}(c, ops)
 
 	}
 	wg.Wait()
