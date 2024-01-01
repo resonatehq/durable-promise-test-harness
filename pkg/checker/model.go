@@ -390,13 +390,9 @@ func deepEqualPromise(state State, local, external *openapi.Promise) error {
 	return nil
 }
 
-// TODO: LOOK BACK HERE
 // hack for now to check if received error response
 func isErrorResponse(respObj *openapi.Promise) bool {
-	if respObj.CreatedOn == nil {
-		return true
-	}
-	if respObj.Id == "" && respObj.State == "" && respObj.Timeout == -1 {
+	if respObj.Id == "" && respObj.State == "" {
 		return true
 	}
 	return false
