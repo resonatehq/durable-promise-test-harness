@@ -4,7 +4,7 @@ deps:
 
 .PHONY: gen
 gen: 
-	oapi-codegen -generate types,client -package openapi ../durable-promise/spec/durable-promise.yaml > pkg/openapi/openapi.go
+	oapi-codegen -generate types,client -package openapi ../resonate/api/promises-openapi.yml > pkg/openapi/openapi.go
 
 .PHONY: build
 build:

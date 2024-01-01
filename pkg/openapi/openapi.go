@@ -18,90 +18,138 @@ import (
 
 // Defines values for PromiseState.
 const (
-	PENDING          PromiseState = "PENDING"
-	REJECTED         PromiseState = "REJECTED"
-	REJECTEDCANCELED PromiseState = "REJECTED_CANCELED"
-	REJECTEDTIMEDOUT PromiseState = "REJECTED_TIMEDOUT"
-	RESOLVED         PromiseState = "RESOLVED"
+	PromiseStatePENDING          PromiseState = "PENDING"
+	PromiseStateREJECTED         PromiseState = "REJECTED"
+	PromiseStateREJECTEDCANCELED PromiseState = "REJECTED_CANCELED"
+	PromiseStateREJECTEDTIMEDOUT PromiseState = "REJECTED_TIMEDOUT"
+	PromiseStateRESOLVED         PromiseState = "RESOLVED"
 )
 
-// CancelPromiseRequest defines model for CancelPromiseRequest.
-type CancelPromiseRequest struct {
-	Value *Value `json:"value,omitempty"`
-}
+// Defines values for PromiseStateComplete.
+const (
+	PromiseStateCompleteREJECTED         PromiseStateComplete = "REJECTED"
+	PromiseStateCompleteREJECTEDCANCELED PromiseStateComplete = "REJECTED_CANCELED"
+	PromiseStateCompleteRESOLVED         PromiseStateComplete = "RESOLVED"
+)
 
-// CreatePromiseRequest defines model for CreatePromiseRequest.
-type CreatePromiseRequest struct {
-	Id      *string `json:"id,omitempty"`
-	Param   *Value  `json:"param,omitempty"`
-	Timeout *int    `json:"timeout,omitempty"`
-}
+// Defines values for SearchPromisesParamsState.
+const (
+	Pending  SearchPromisesParamsState = "pending"
+	Rejected SearchPromisesParamsState = "rejected"
+	Resolved SearchPromisesParamsState = "resolved"
+)
 
 // Promise defines model for Promise.
 type Promise struct {
-	CompletedOn               *int               `json:"completedOn,omitempty"`
-	CreatedOn                 *int               `json:"createdOn,omitempty"`
-	Id                        *string            `json:"id,omitempty"`
-	IdempotencyKeyForComplete *string            `json:"idempotencyKeyForComplete,omitempty"`
-	IdempotencyKeyForCreate   *string            `json:"idempotencyKeyForCreate,omitempty"`
-	Param                     *Value             `json:"param,omitempty"`
-	State                     *PromiseState      `json:"state,omitempty"`
-	Tags                      *map[string]string `json:"tags,omitempty"`
-	Timeout                   *int               `json:"timeout,omitempty"`
-	Value                     *Value             `json:"value,omitempty"`
+	CompletedOn               *int              `json:"completedOn,omitempty"`
+	CreatedOn                 *int              `json:"createdOn,omitempty"`
+	Id                        string            `json:"id"`
+	IdempotencyKeyForComplete *string           `json:"idempotencyKeyForComplete,omitempty"`
+	IdempotencyKeyForCreate   *string           `json:"idempotencyKeyForCreate,omitempty"`
+	Param                     PromiseValue      `json:"param"`
+	State                     PromiseState      `json:"state"`
+	Tags                      map[string]string `json:"tags"`
+	Timeout                   int64             `json:"timeout"`
+	Value                     PromiseValue      `json:"value"`
 }
 
-// PromiseState defines model for Promise.State.
+// PromiseState defines model for PromiseState.
 type PromiseState string
 
-// RejectPromiseRequest defines model for RejectPromiseRequest.
-type RejectPromiseRequest struct {
-	Value *Value `json:"value,omitempty"`
+// PromiseStateComplete defines model for PromiseStateComplete.
+type PromiseStateComplete string
+
+// PromiseValue defines model for PromiseValue.
+type PromiseValue struct {
+	Data    *string           `json:"data,omitempty"`
+	Headers map[string]string `json:"headers"`
 }
 
-// ResolvePromiseRequest defines model for ResolvePromiseRequest.
-type ResolvePromiseRequest struct {
-	Value *Value `json:"value,omitempty"`
-}
-
-// SearchPromiseResponse defines model for SearchPromiseResponse.
-type SearchPromiseResponse struct {
+// SearchPromisesResponseObj defines model for SearchPromisesResponseObj.
+type SearchPromisesResponseObj struct {
 	Cursor   *string    `json:"cursor,omitempty"`
 	Promises *[]Promise `json:"promises,omitempty"`
 }
 
-// Value defines model for Value.
-type Value struct {
-	Data    *string            `json:"data,omitempty"`
-	Headers *map[string]string `json:"headers,omitempty"`
-}
+// Id defines model for Id.
+type Id = string
+
+// IdempotencyKey defines model for IdempotencyKey.
+type IdempotencyKey = string
+
+// RequestId defines model for RequestId.
+type RequestId = string
+
+// Strict defines model for Strict.
+type Strict = bool
 
 // SearchPromisesParams defines parameters for SearchPromises.
 type SearchPromisesParams struct {
-	// Q Search query
-	Q string `form:"q" json:"q"`
+	// Id Search promises for matching IDs, can include wildcards.
+	//
+	// For example:
+	// - "foo/*" matches all IDs starting with "foo/"
+	// - "*/bar" matches all IDs starting with "bar/"
+	// - "foo/*/bar" matches all IDs starting with "foo/" and ending with "/bar"
+	Id *string `form:"id,omitempty" json:"id,omitempty"`
 
-	// State State of promises
-	State *string `form:"state,omitempty" json:"state,omitempty"`
+	// State Search promises for matching states
+	State *SearchPromisesParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Tags  *map[string]string         `json:"tags,omitempty"`
 
-	// Limit Number of promises returned per page, max 100
+	// Limit Number of results
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
-	// Cursor Cursor for the next page of the query, overrides other query parameters
+	// Cursor Cursor for pagination
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
-// CancelPromiseJSONRequestBody defines body for CancelPromise for application/json ContentType.
-type CancelPromiseJSONRequestBody = CancelPromiseRequest
+// SearchPromisesParamsState defines parameters for SearchPromises.
+type SearchPromisesParamsState string
+
+// CreatePromiseJSONBody defines parameters for CreatePromise.
+type CreatePromiseJSONBody struct {
+	Id      string             `json:"id"`
+	Param   *PromiseValue      `json:"param,omitempty"`
+	Tags    *map[string]string `json:"tags,omitempty"`
+	Timeout int64              `json:"timeout"`
+}
+
+// CreatePromiseParams defines parameters for CreatePromise.
+type CreatePromiseParams struct {
+	// IdempotencyKey Deduplicates multiple requests
+	IdempotencyKey *IdempotencyKey `json:"idempotency-key,omitempty"`
+
+	// Strict If true, deduplicates only when promise state matches the request
+	Strict *Strict `json:"strict,omitempty"`
+
+	// RequestId Unique ID for each request
+	RequestId *RequestId `json:"request-id,omitempty"`
+}
+
+// PatchPromisesIdJSONBody defines parameters for PatchPromisesId.
+type PatchPromisesIdJSONBody struct {
+	State PromiseStateComplete `json:"state"`
+	Value *PromiseValue        `json:"value,omitempty"`
+}
+
+// PatchPromisesIdParams defines parameters for PatchPromisesId.
+type PatchPromisesIdParams struct {
+	// RequestId Unique ID for each request
+	RequestId *RequestId `json:"request-id,omitempty"`
+
+	// IdempotencyKey Deduplicates multiple requests
+	IdempotencyKey *IdempotencyKey `json:"idempotency-key,omitempty"`
+
+	// Strict If true, deduplicates only when promise state matches the request
+	Strict *Strict `json:"strict,omitempty"`
+}
 
 // CreatePromiseJSONRequestBody defines body for CreatePromise for application/json ContentType.
-type CreatePromiseJSONRequestBody = CreatePromiseRequest
+type CreatePromiseJSONRequestBody CreatePromiseJSONBody
 
-// RejectPromiseJSONRequestBody defines body for RejectPromise for application/json ContentType.
-type RejectPromiseJSONRequestBody = RejectPromiseRequest
-
-// ResolvePromiseJSONRequestBody defines body for ResolvePromise for application/json ContentType.
-type ResolvePromiseJSONRequestBody = ResolvePromiseRequest
+// PatchPromisesIdJSONRequestBody defines body for PatchPromisesId for application/json ContentType.
+type PatchPromisesIdJSONRequestBody PatchPromisesIdJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -179,28 +227,18 @@ type ClientInterface interface {
 	// SearchPromises request
 	SearchPromises(ctx context.Context, params *SearchPromisesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetPromise request
-	GetPromise(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// CancelPromiseWithBody request with any body
-	CancelPromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	CancelPromise(ctx context.Context, id string, body CancelPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// CreatePromiseWithBody request with any body
-	CreatePromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreatePromiseWithBody(ctx context.Context, params *CreatePromiseParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	CreatePromise(ctx context.Context, id string, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	CreatePromise(ctx context.Context, params *CreatePromiseParams, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RejectPromiseWithBody request with any body
-	RejectPromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetPromise request
+	GetPromise(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	RejectPromise(ctx context.Context, id string, body RejectPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PatchPromisesIdWithBody request with any body
+	PatchPromisesIdWithBody(ctx context.Context, id Id, params *PatchPromisesIdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ResolvePromiseWithBody request with any body
-	ResolvePromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	ResolvePromise(ctx context.Context, id string, body ResolvePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PatchPromisesId(ctx context.Context, id Id, params *PatchPromisesIdParams, body PatchPromisesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) SearchPromises(ctx context.Context, params *SearchPromisesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -215,7 +253,31 @@ func (c *Client) SearchPromises(ctx context.Context, params *SearchPromisesParam
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetPromise(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreatePromiseWithBody(ctx context.Context, params *CreatePromiseParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePromiseRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreatePromise(ctx context.Context, params *CreatePromiseParams, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePromiseRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPromise(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPromiseRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -227,8 +289,8 @@ func (c *Client) GetPromise(ctx context.Context, id string, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelPromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCancelPromiseRequestWithBody(c.Server, id, contentType, body)
+func (c *Client) PatchPromisesIdWithBody(ctx context.Context, id Id, params *PatchPromisesIdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchPromisesIdRequestWithBody(c.Server, id, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -239,80 +301,8 @@ func (c *Client) CancelPromiseWithBody(ctx context.Context, id string, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) CancelPromise(ctx context.Context, id string, body CancelPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCancelPromiseRequest(c.Server, id, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreatePromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreatePromiseRequestWithBody(c.Server, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) CreatePromise(ctx context.Context, id string, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreatePromiseRequest(c.Server, id, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) RejectPromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRejectPromiseRequestWithBody(c.Server, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) RejectPromise(ctx context.Context, id string, body RejectPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewRejectPromiseRequest(c.Server, id, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ResolvePromiseWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewResolvePromiseRequestWithBody(c.Server, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ResolvePromise(ctx context.Context, id string, body ResolvePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewResolvePromiseRequest(c.Server, id, body)
+func (c *Client) PatchPromisesId(ctx context.Context, id Id, params *PatchPromisesIdParams, body PatchPromisesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchPromisesIdRequest(c.Server, id, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -345,21 +335,41 @@ func NewSearchPromisesRequest(server string, params *SearchPromisesParams) (*htt
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, params.Q); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
+		if params.Id != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "id", runtime.ParamLocationQuery, *params.Id); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
 				}
 			}
+
 		}
 
 		if params.State != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "state", runtime.ParamLocationQuery, *params.State); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Tags != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("deepObject", true, "tags", runtime.ParamLocationQuery, *params.Tags); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -416,8 +426,85 @@ func NewSearchPromisesRequest(server string, params *SearchPromisesParams) (*htt
 	return req, nil
 }
 
+// NewCreatePromiseRequest calls the generic CreatePromise builder with application/json body
+func NewCreatePromiseRequest(server string, params *CreatePromiseParams, body CreatePromiseJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePromiseRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreatePromiseRequestWithBody generates requests for CreatePromise with any type of body
+func NewCreatePromiseRequestWithBody(server string, params *CreatePromiseParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/promises")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.IdempotencyKey != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "idempotency-key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("idempotency-key", headerParam0)
+		}
+
+		if params.Strict != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "strict", runtime.ParamLocationHeader, *params.Strict)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("strict", headerParam1)
+		}
+
+		if params.RequestId != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "request-id", runtime.ParamLocationHeader, *params.RequestId)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("request-id", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewGetPromiseRequest generates requests for GetPromise
-func NewGetPromiseRequest(server string, id string) (*http.Request, error) {
+func NewGetPromiseRequest(server string, id Id) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -450,19 +537,19 @@ func NewGetPromiseRequest(server string, id string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCancelPromiseRequest calls the generic CancelPromise builder with application/json body
-func NewCancelPromiseRequest(server string, id string, body CancelPromiseJSONRequestBody) (*http.Request, error) {
+// NewPatchPromisesIdRequest calls the generic PatchPromisesId builder with application/json body
+func NewPatchPromisesIdRequest(server string, id Id, params *PatchPromisesIdParams, body PatchPromisesIdJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCancelPromiseRequestWithBody(server, id, "application/json", bodyReader)
+	return NewPatchPromisesIdRequestWithBody(server, id, params, "application/json", bodyReader)
 }
 
-// NewCancelPromiseRequestWithBody generates requests for CancelPromise with any type of body
-func NewCancelPromiseRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPatchPromisesIdRequestWithBody generates requests for PatchPromisesId with any type of body
+func NewPatchPromisesIdRequestWithBody(server string, id Id, params *PatchPromisesIdParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -477,7 +564,7 @@ func NewCancelPromiseRequestWithBody(server string, id string, contentType strin
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/promises/%s/cancel", pathParam0)
+	operationPath := fmt.Sprintf("/promises/%s", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -487,153 +574,49 @@ func NewCancelPromiseRequestWithBody(server string, id string, contentType strin
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", contentType)
 
-	return req, nil
-}
+	if params != nil {
 
-// NewCreatePromiseRequest calls the generic CreatePromise builder with application/json body
-func NewCreatePromiseRequest(server string, id string, body CreatePromiseJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
+		if params.RequestId != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "request-id", runtime.ParamLocationHeader, *params.RequestId)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("request-id", headerParam0)
+		}
+
+		if params.IdempotencyKey != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "idempotency-key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("idempotency-key", headerParam1)
+		}
+
+		if params.Strict != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "strict", runtime.ParamLocationHeader, *params.Strict)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("strict", headerParam2)
+		}
+
 	}
-	bodyReader = bytes.NewReader(buf)
-	return NewCreatePromiseRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewCreatePromiseRequestWithBody generates requests for CreatePromise with any type of body
-func NewCreatePromiseRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/promises/%s/create", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewRejectPromiseRequest calls the generic RejectPromise builder with application/json body
-func NewRejectPromiseRequest(server string, id string, body RejectPromiseJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewRejectPromiseRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewRejectPromiseRequestWithBody generates requests for RejectPromise with any type of body
-func NewRejectPromiseRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/promises/%s/reject", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewResolvePromiseRequest calls the generic ResolvePromise builder with application/json body
-func NewResolvePromiseRequest(server string, id string, body ResolvePromiseJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewResolvePromiseRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewResolvePromiseRequestWithBody generates requests for ResolvePromise with any type of body
-func NewResolvePromiseRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/promises/%s/resolve", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -684,34 +667,24 @@ type ClientWithResponsesInterface interface {
 	// SearchPromisesWithResponse request
 	SearchPromisesWithResponse(ctx context.Context, params *SearchPromisesParams, reqEditors ...RequestEditorFn) (*SearchPromisesResponse, error)
 
-	// GetPromiseWithResponse request
-	GetPromiseWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetPromiseResponse, error)
-
-	// CancelPromiseWithBodyWithResponse request with any body
-	CancelPromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelPromiseResponse, error)
-
-	CancelPromiseWithResponse(ctx context.Context, id string, body CancelPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelPromiseResponse, error)
-
 	// CreatePromiseWithBodyWithResponse request with any body
-	CreatePromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error)
+	CreatePromiseWithBodyWithResponse(ctx context.Context, params *CreatePromiseParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error)
 
-	CreatePromiseWithResponse(ctx context.Context, id string, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error)
+	CreatePromiseWithResponse(ctx context.Context, params *CreatePromiseParams, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error)
 
-	// RejectPromiseWithBodyWithResponse request with any body
-	RejectPromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RejectPromiseResponse, error)
+	// GetPromiseWithResponse request
+	GetPromiseWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetPromiseResponse, error)
 
-	RejectPromiseWithResponse(ctx context.Context, id string, body RejectPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*RejectPromiseResponse, error)
+	// PatchPromisesIdWithBodyWithResponse request with any body
+	PatchPromisesIdWithBodyWithResponse(ctx context.Context, id Id, params *PatchPromisesIdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchPromisesIdResponse, error)
 
-	// ResolvePromiseWithBodyWithResponse request with any body
-	ResolvePromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolvePromiseResponse, error)
-
-	ResolvePromiseWithResponse(ctx context.Context, id string, body ResolvePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolvePromiseResponse, error)
+	PatchPromisesIdWithResponse(ctx context.Context, id Id, params *PatchPromisesIdParams, body PatchPromisesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchPromisesIdResponse, error)
 }
 
 type SearchPromisesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *SearchPromiseResponse
+	JSON200      *SearchPromisesResponseObj
 }
 
 // Status returns HTTPResponse.Status
@@ -724,6 +697,29 @@ func (r SearchPromisesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r SearchPromisesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreatePromiseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Promise
+	JSON201      *Promise
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePromiseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePromiseResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -752,16 +748,14 @@ func (r GetPromiseResponse) StatusCode() int {
 	return 0
 }
 
-type CancelPromiseResponse struct {
+type PatchPromisesIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Promise
-	JSON201      *Promise
-	JSON403      *Promise
 }
 
 // Status returns HTTPResponse.Status
-func (r CancelPromiseResponse) Status() string {
+func (r PatchPromisesIdResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -769,79 +763,7 @@ func (r CancelPromiseResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r CancelPromiseResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type CreatePromiseResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Promise
-	JSON201      *Promise
-	JSON403      *Promise
-}
-
-// Status returns HTTPResponse.Status
-func (r CreatePromiseResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CreatePromiseResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type RejectPromiseResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Promise
-	JSON201      *Promise
-	JSON403      *Promise
-}
-
-// Status returns HTTPResponse.Status
-func (r RejectPromiseResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r RejectPromiseResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ResolvePromiseResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Promise
-	JSON201      *Promise
-	JSON403      *Promise
-}
-
-// Status returns HTTPResponse.Status
-func (r ResolvePromiseResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ResolvePromiseResponse) StatusCode() int {
+func (r PatchPromisesIdResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -857,8 +779,25 @@ func (c *ClientWithResponses) SearchPromisesWithResponse(ctx context.Context, pa
 	return ParseSearchPromisesResponse(rsp)
 }
 
+// CreatePromiseWithBodyWithResponse request with arbitrary body returning *CreatePromiseResponse
+func (c *ClientWithResponses) CreatePromiseWithBodyWithResponse(ctx context.Context, params *CreatePromiseParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error) {
+	rsp, err := c.CreatePromiseWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePromiseResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreatePromiseWithResponse(ctx context.Context, params *CreatePromiseParams, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error) {
+	rsp, err := c.CreatePromise(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePromiseResponse(rsp)
+}
+
 // GetPromiseWithResponse request returning *GetPromiseResponse
-func (c *ClientWithResponses) GetPromiseWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetPromiseResponse, error) {
+func (c *ClientWithResponses) GetPromiseWithResponse(ctx context.Context, id Id, reqEditors ...RequestEditorFn) (*GetPromiseResponse, error) {
 	rsp, err := c.GetPromise(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -866,72 +805,21 @@ func (c *ClientWithResponses) GetPromiseWithResponse(ctx context.Context, id str
 	return ParseGetPromiseResponse(rsp)
 }
 
-// CancelPromiseWithBodyWithResponse request with arbitrary body returning *CancelPromiseResponse
-func (c *ClientWithResponses) CancelPromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CancelPromiseResponse, error) {
-	rsp, err := c.CancelPromiseWithBody(ctx, id, contentType, body, reqEditors...)
+// PatchPromisesIdWithBodyWithResponse request with arbitrary body returning *PatchPromisesIdResponse
+func (c *ClientWithResponses) PatchPromisesIdWithBodyWithResponse(ctx context.Context, id Id, params *PatchPromisesIdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchPromisesIdResponse, error) {
+	rsp, err := c.PatchPromisesIdWithBody(ctx, id, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCancelPromiseResponse(rsp)
+	return ParsePatchPromisesIdResponse(rsp)
 }
 
-func (c *ClientWithResponses) CancelPromiseWithResponse(ctx context.Context, id string, body CancelPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CancelPromiseResponse, error) {
-	rsp, err := c.CancelPromise(ctx, id, body, reqEditors...)
+func (c *ClientWithResponses) PatchPromisesIdWithResponse(ctx context.Context, id Id, params *PatchPromisesIdParams, body PatchPromisesIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchPromisesIdResponse, error) {
+	rsp, err := c.PatchPromisesId(ctx, id, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseCancelPromiseResponse(rsp)
-}
-
-// CreatePromiseWithBodyWithResponse request with arbitrary body returning *CreatePromiseResponse
-func (c *ClientWithResponses) CreatePromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error) {
-	rsp, err := c.CreatePromiseWithBody(ctx, id, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreatePromiseResponse(rsp)
-}
-
-func (c *ClientWithResponses) CreatePromiseWithResponse(ctx context.Context, id string, body CreatePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePromiseResponse, error) {
-	rsp, err := c.CreatePromise(ctx, id, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCreatePromiseResponse(rsp)
-}
-
-// RejectPromiseWithBodyWithResponse request with arbitrary body returning *RejectPromiseResponse
-func (c *ClientWithResponses) RejectPromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RejectPromiseResponse, error) {
-	rsp, err := c.RejectPromiseWithBody(ctx, id, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseRejectPromiseResponse(rsp)
-}
-
-func (c *ClientWithResponses) RejectPromiseWithResponse(ctx context.Context, id string, body RejectPromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*RejectPromiseResponse, error) {
-	rsp, err := c.RejectPromise(ctx, id, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseRejectPromiseResponse(rsp)
-}
-
-// ResolvePromiseWithBodyWithResponse request with arbitrary body returning *ResolvePromiseResponse
-func (c *ClientWithResponses) ResolvePromiseWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolvePromiseResponse, error) {
-	rsp, err := c.ResolvePromiseWithBody(ctx, id, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseResolvePromiseResponse(rsp)
-}
-
-func (c *ClientWithResponses) ResolvePromiseWithResponse(ctx context.Context, id string, body ResolvePromiseJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolvePromiseResponse, error) {
-	rsp, err := c.ResolvePromise(ctx, id, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseResolvePromiseResponse(rsp)
+	return ParsePatchPromisesIdResponse(rsp)
 }
 
 // ParseSearchPromisesResponse parses an HTTP response from a SearchPromisesWithResponse call
@@ -949,77 +837,11 @@ func ParseSearchPromisesResponse(rsp *http.Response) (*SearchPromisesResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest SearchPromiseResponse
+		var dest SearchPromisesResponseObj
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetPromiseResponse parses an HTTP response from a GetPromiseWithResponse call
-func ParseGetPromiseResponse(rsp *http.Response) (*GetPromiseResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetPromiseResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseCancelPromiseResponse parses an HTTP response from a CancelPromiseWithResponse call
-func ParseCancelPromiseResponse(rsp *http.Response) (*CancelPromiseResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CancelPromiseResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
 
 	}
 
@@ -1054,27 +876,20 @@ func ParseCreatePromiseResponse(rsp *http.Response) (*CreatePromiseResponse, err
 		}
 		response.JSON201 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
 	}
 
 	return response, nil
 }
 
-// ParseRejectPromiseResponse parses an HTTP response from a RejectPromiseWithResponse call
-func ParseRejectPromiseResponse(rsp *http.Response) (*RejectPromiseResponse, error) {
+// ParseGetPromiseResponse parses an HTTP response from a GetPromiseWithResponse call
+func ParseGetPromiseResponse(rsp *http.Response) (*GetPromiseResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &RejectPromiseResponse{
+	response := &GetPromiseResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1087,34 +902,20 @@ func ParseRejectPromiseResponse(rsp *http.Response) (*RejectPromiseResponse, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
 	}
 
 	return response, nil
 }
 
-// ParseResolvePromiseResponse parses an HTTP response from a ResolvePromiseWithResponse call
-func ParseResolvePromiseResponse(rsp *http.Response) (*ResolvePromiseResponse, error) {
+// ParsePatchPromisesIdResponse parses an HTTP response from a PatchPromisesIdWithResponse call
+func ParsePatchPromisesIdResponse(rsp *http.Response) (*PatchPromisesIdResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ResolvePromiseResponse{
+	response := &PatchPromisesIdResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1126,20 +927,6 @@ func ParseResolvePromiseResponse(rsp *http.Response) (*ResolvePromiseResponse, e
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Promise
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
 
 	}
 

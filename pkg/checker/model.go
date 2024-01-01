@@ -62,7 +62,7 @@ func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, err
 	if !ok {
 		return state, errors.New("res.Value not of type *openapi.SearchPromisesParams")
 	}
-	respObj, ok := resp.value.(*openapi.SearchPromiseResponse)
+	respObj, ok := resp.value.(*openapi.SearchPromisesResponseObj)
 	if !ok {
 		return state, errors.New("res.Value not of type *openapi.SearchPromiseResponse")
 	}
@@ -74,15 +74,14 @@ func (v *SearchPromiseVerifier) Verify(state State, req, resp event) (State, err
 		return state, fmt.Errorf("expected '%d', got '%d'", http.StatusOK, resp.code)
 	}
 
-	localResults := state.Search(*reqObj.State)
+	localResults := state.Search(string(*reqObj.State))
 	serverResults := *respObj.Promises
-
 	sort.Slice(localResults, func(i, j int) bool {
-		return *localResults[i].Id < *localResults[j].Id
+		return localResults[i].Id < localResults[j].Id
 	})
 
 	sort.Slice(serverResults, func(i, j int) bool {
-		return *serverResults[i].Id < *serverResults[j].Id
+		return serverResults[i].Id < serverResults[j].Id
 	})
 
 	if err := deepEqualPromiseList(state, localResults, serverResults); err != nil {
@@ -147,7 +146,7 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
-	reqObj, ok := req.value.(*openapi.CreatePromiseRequest)
+	reqObj, ok := req.value.(*openapi.CreatePromiseJSONRequestBody)
 	if !ok {
 		return state, errors.New("req.Value not of type *openapi.CreatePromiseRequest")
 	}
@@ -157,7 +156,7 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	}
 
 	if resp.status == store.Fail {
-		if resp.code == http.StatusConflict && state.Exists(*reqObj.Id) {
+		if resp.code == http.StatusConflict && state.Exists(reqObj.Id) {
 			return state, nil
 		}
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
@@ -169,12 +168,12 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
 		return state, fmt.Errorf("expected '%d' or '%d', got '%d'", http.StatusCreated, http.StatusOK, resp.code)
 	}
-	if *respObj.State != openapi.PENDING {
-		return state, fmt.Errorf("expected '%s', got '%s'", openapi.PENDING, *respObj.State)
+	if respObj.State != openapi.PromiseStatePENDING {
+		return state, fmt.Errorf("expected '%s', got '%s'", openapi.PromiseStatePENDING, respObj.State)
 	}
 
 	newState := utils.DeepCopy(state)
-	newState.Set(*respObj.Id, respObj)
+	newState.Set(respObj.Id, respObj)
 
 	return newState, nil
 }
@@ -202,7 +201,7 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 	if resp.status == store.Fail {
 		switch resp.code {
 		case http.StatusForbidden:
-			if state.Completed(*reqObj.Id) || isErrorResponse(respObj) || isTimedOut(*respObj.State) {
+			if state.Completed(*reqObj.Id) || isErrorResponse(respObj) || isTimedOut(respObj.State) {
 				return state, nil
 			}
 			return state, fmt.Errorf("got an unexpected 403 status: promise not completed")
@@ -216,12 +215,12 @@ func (v *CompletePromiseVerifier) Verify(state State, req, resp event) (State, e
 		}
 	}
 
-	if resp.code != http.StatusCreated && resp.code != http.StatusOK && isCorrectCompleteState(resp.API, *respObj.State) {
+	if resp.code != http.StatusCreated && resp.code != http.StatusOK && isCorrectCompleteState(resp.API, respObj.State) {
 		return state, fmt.Errorf("go an unexpected ok status code '%d", resp.code)
 	}
 
 	newState := utils.DeepCopy(state)
-	newState.Set(*respObj.Id, respObj)
+	newState.Set(respObj.Id, respObj)
 
 	return newState, nil
 }
@@ -236,14 +235,14 @@ func (s State) Set(key string, val *openapi.Promise) {
 func (s State) Search(stateParam string) []openapi.Promise {
 	filter := make([]openapi.Promise, 0)
 	for _, promise := range s {
-		if promise == nil && promise.State == nil {
+		if promise == nil && promise.State == "" {
 			continue
 		}
-		if strings.EqualFold(stateParam, string(openapi.REJECTED)) && isRejectedState(*promise.State) {
+		if strings.EqualFold(stateParam, string(openapi.PromiseStateREJECTED)) && isRejectedState(promise.State) {
 			filter = append(filter, *promise)
 			continue
 		}
-		if strings.EqualFold(stateParam, string(*promise.State)) {
+		if strings.EqualFold(stateParam, string(promise.State)) {
 			filter = append(filter, *promise)
 		}
 	}
@@ -269,12 +268,8 @@ func (s State) Completed(key string) bool {
 		return false
 	}
 
-	if val.State == nil {
-		panic("got nil promise state")
-	}
-
-	switch *val.State {
-	case openapi.RESOLVED, openapi.REJECTED, openapi.REJECTEDCANCELED, openapi.REJECTEDTIMEDOUT:
+	switch val.State {
+	case openapi.PromiseStateRESOLVED, openapi.PromiseStateREJECTED, openapi.PromiseStateREJECTEDCANCELED, openapi.PromiseStateREJECTEDTIMEDOUT:
 		return true
 	default:
 		return false
@@ -296,8 +291,8 @@ func (s State) String() string {
 		promise := s[k]
 		build.WriteString(fmt.Sprintf(
 			"Promise(Id=%v, state=%v)\n",
-			*promise.Id,
-			*promise.State,
+			promise.Id,
+			promise.State,
 		))
 	}
 
@@ -313,17 +308,17 @@ func isValidResponse(stat store.Status) bool {
 }
 
 func isTimedOut(state openapi.PromiseState) bool {
-	return state == openapi.REJECTEDTIMEDOUT
+	return state == openapi.PromiseStateREJECTEDTIMEDOUT
 }
 
 func isCorrectCompleteState(api store.API, state openapi.PromiseState) bool {
 	switch api {
 	case store.Resolve:
-		return state == openapi.RESOLVED
+		return state == openapi.PromiseStateRESOLVED
 	case store.Reject:
-		return state == openapi.REJECTED
+		return state == openapi.PromiseStateREJECTED
 	case store.Cancel:
-		return state == openapi.REJECTEDCANCELED
+		return state == openapi.PromiseStateREJECTEDCANCELED
 	default:
 		return false
 	}
@@ -331,7 +326,7 @@ func isCorrectCompleteState(api store.API, state openapi.PromiseState) bool {
 
 func isRejectedState(state openapi.PromiseState) bool {
 	switch state {
-	case openapi.REJECTED, openapi.REJECTEDCANCELED, openapi.REJECTEDTIMEDOUT:
+	case openapi.PromiseStateREJECTED, openapi.PromiseStateREJECTEDCANCELED, openapi.PromiseStateREJECTEDTIMEDOUT:
 		return true
 	default:
 		return false
@@ -382,22 +377,26 @@ func deepEqualPromise(state State, local, external *openapi.Promise) error {
 	// unpredictable behavior, the server's clock is the definitive source of time for any timeouts.
 	// This keeps the timing consistent from the perspective of the server, which helps ensure
 	// reliability in the system.
-	if external.State != nil && *external.State != openapi.REJECTEDTIMEDOUT {
+	if external.State != openapi.PromiseStateREJECTEDTIMEDOUT {
 		if !reflect.DeepEqual(local.State, external.State) {
 			return fmt.Errorf("expected'State' %v, got %v", local.State, external.State)
 		}
 	} else {
 		// if external state is timeout, then local state should update to timedout
 		local.State = external.State
-		state.Set(*local.Id, local)
+		state.Set(local.Id, local)
 	}
 
 	return nil
 }
 
+// TODO: LOOK BACK HERE
 // hack for now to check if received error response
 func isErrorResponse(respObj *openapi.Promise) bool {
-	if respObj.Id == nil && respObj.State == nil && respObj.Timeout == nil {
+	if respObj.CreatedOn == nil {
+		return true
+	}
+	if respObj.Id == "" && respObj.State == "" && respObj.Timeout == -1 {
 		return true
 	}
 	return false

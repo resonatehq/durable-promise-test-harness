@@ -73,21 +73,23 @@ func (g *Generator) GenerateSearchPromise(r *rand.Rand, clientID int) store.Oper
 	var state string
 	switch r.Intn(3) {
 	case 0:
-		state = string(openapi.PENDING)
+		state = string(openapi.PromiseStatePENDING)
 	case 1:
-		state = string(openapi.RESOLVED)
+		state = string(openapi.PromiseStateRESOLVED)
 	case 2:
 		// rejected gets the timeout and canceled promises too
-		state = string(openapi.REJECTED)
+		state = string(openapi.PromiseStateREJECTED)
 	}
+
+	stateParam := openapi.SearchPromisesParamsState(state)
 
 	return store.Operation{
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Search,
 		Input: &openapi.SearchPromisesParams{
-			Q:     "*",
-			State: utils.ToPointer(state),
+			Id:    utils.ToPointer("*"),
+			State: &stateParam,
 			// Limit: utils.ToPointer(),
 			// Cursor: utils.ToPointer(),
 		},
@@ -114,12 +116,12 @@ func (g *Generator) GenerateCreatePromise(r *rand.Rand, clientID int) store.Oper
 		ID:       int(uuid.New().ID()),
 		ClientID: clientID,
 		API:      store.Create,
-		Input: &openapi.CreatePromiseRequest{
-			Id: utils.ToPointer(promiseId),
-			Param: &openapi.Value{
+		Input: &openapi.CreatePromiseJSONRequestBody{
+			Id: promiseId,
+			Param: &openapi.PromiseValue{
 				Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 			},
-			Timeout: utils.ToPointer(2524608000000),
+			Timeout: 2524608000000,
 		},
 	}
 }
@@ -134,8 +136,9 @@ func (g *Generator) GenerateCancelPromise(r *rand.Rand, clientID int) store.Oper
 		API:      store.Cancel,
 		Input: &openapi.CompletePromiseRequestWrapper{
 			Id: utils.ToPointer(promiseId),
-			Request: &openapi.CancelPromiseRequest{
-				Value: &openapi.Value{
+			Request: &openapi.PatchPromisesIdJSONRequestBody{
+				State: openapi.PromiseStateCompleteREJECTEDCANCELED,
+				Value: &openapi.PromiseValue{
 					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 				},
 			},
@@ -153,8 +156,9 @@ func (g *Generator) GenerateResolvePromise(r *rand.Rand, clientID int) store.Ope
 		API:      store.Resolve,
 		Input: &openapi.CompletePromiseRequestWrapper{
 			Id: utils.ToPointer(promiseId),
-			Request: &openapi.ResolvePromiseRequest{
-				Value: &openapi.Value{
+			Request: &openapi.PatchPromisesIdJSONRequestBody{
+				State: openapi.PromiseStateCompleteRESOLVED,
+				Value: &openapi.PromiseValue{
 					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 				},
 			},
@@ -172,8 +176,9 @@ func (g *Generator) GenerateRejectPromise(r *rand.Rand, clientID int) store.Oper
 		API:      store.Reject,
 		Input: &openapi.CompletePromiseRequestWrapper{
 			Id: utils.ToPointer(promiseId),
-			Request: &openapi.RejectPromiseRequest{
-				Value: &openapi.Value{
+			Request: &openapi.PatchPromisesIdJSONRequestBody{
+				State: openapi.PromiseStateCompleteREJECTED,
+				Value: &openapi.PromiseValue{
 					Data: utils.ToPointer(base64.StdEncoding.EncodeToString(data)),
 				},
 			},
