@@ -57,7 +57,7 @@ func (c *Client) Search(ctx context.Context, op store.Operation) store.Operation
 		return c.client.SearchPromises(ctx, input)
 	}
 
-	return invoke[openapi.SearchPromiseResponse](ctx, op, call, []int{200})
+	return invoke[openapi.SearchPromisesResponseObj](ctx, op, call, []int{200})
 }
 
 func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {
@@ -74,11 +74,11 @@ func (c *Client) Get(ctx context.Context, op store.Operation) store.Operation {
 
 func (c *Client) Create(ctx context.Context, op store.Operation) store.Operation {
 	call := func() (*http.Response, error) {
-		input, ok := op.Input.(*openapi.CreatePromiseRequest)
-		if !ok || input == nil || input.Id == nil {
+		input, ok := op.Input.(*openapi.CreatePromiseJSONRequestBody)
+		if !ok || input == nil {
 			panic(ok)
 		}
-		return c.client.CreatePromise(ctx, *input.Id, *input)
+		return c.client.CreatePromise(ctx, nil, *input)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -90,11 +90,11 @@ func (c *Client) Cancel(ctx context.Context, op store.Operation) store.Operation
 		if !ok {
 			panic(ok)
 		}
-		body, ok := input.Request.(*openapi.CancelPromiseRequest)
+		body, ok := input.Request.(*openapi.PatchPromisesIdJSONRequestBody)
 		if !ok || body == nil {
 			panic(ok)
 		}
-		return c.client.CancelPromise(ctx, *input.Id, *body)
+		return c.client.PatchPromisesId(ctx, *input.Id, nil, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -106,11 +106,11 @@ func (c *Client) Resolve(ctx context.Context, op store.Operation) store.Operatio
 		if !ok {
 			panic(ok)
 		}
-		body, ok := input.Request.(*openapi.ResolvePromiseRequest)
+		body, ok := input.Request.(*openapi.PatchPromisesIdJSONRequestBody)
 		if !ok || body == nil {
 			panic(ok)
 		}
-		return c.client.ResolvePromise(ctx, *input.Id, *body)
+		return c.client.PatchPromisesId(ctx, *input.Id, nil, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency
@@ -122,11 +122,11 @@ func (c *Client) Reject(ctx context.Context, op store.Operation) store.Operation
 		if !ok {
 			panic(ok)
 		}
-		body, ok := input.Request.(*openapi.RejectPromiseRequest)
+		body, ok := input.Request.(*openapi.PatchPromisesIdJSONRequestBody)
 		if !ok || body == nil {
 			panic(ok)
 		}
-		return c.client.RejectPromise(ctx, *input.Id, *body)
+		return c.client.PatchPromisesId(ctx, *input.Id, nil, *body)
 	}
 
 	return invoke[openapi.Promise](ctx, op, call, []int{200, 201}) // 200 for idempotency

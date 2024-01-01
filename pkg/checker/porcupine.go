@@ -40,8 +40,8 @@ func newPorcupineModel() porcupine.Model {
 				param = utils.SafeDereference(v.State)
 			case string:
 				param = v
-			case *openapi.CreatePromiseRequest:
-				param = utils.SafeDereference(v.Id)
+			case *openapi.CreatePromiseJSONRequestBody:
+				param = v.Id
 			case *openapi.CompletePromiseRequestWrapper:
 				param = utils.SafeDereference(v.Id)
 			default:
