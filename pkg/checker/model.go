@@ -143,6 +143,7 @@ func newCreatePromiseVerifier() *CreatePromiseVerifier {
 
 func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, error) {
 	if !isValidResponse(resp.status) {
+		fmt.Printf("invalid response")
 		return state, fmt.Errorf("operation has unexpected status '%d'", resp.status)
 	}
 
@@ -159,17 +160,30 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 		if resp.code == http.StatusConflict && state.Exists(reqObj.Id) {
 			return state, nil
 		}
+		fmt.Printf("unexpected failure code")
 		return state, fmt.Errorf("got an unexpected failure status code '%d", resp.code)
 	}
 
 	if resp.status != store.Ok {
+		fmt.Printf("unexpected status store ok\n")
 		return state, fmt.Errorf("expected '%d', got '%d'", store.Ok, resp.status)
 	}
 	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
+		fmt.Printf("unexpected status not created and not status ok\n")
 		return state, fmt.Errorf("expected '%d' or '%d', got '%d'", http.StatusCreated, http.StatusOK, resp.code)
 	}
-	if respObj.State != openapi.PromiseStatePENDING {
+	if resp.code == http.StatusCreated && respObj.State != openapi.PromiseStatePENDING {
+		fmt.Printf("unexpected response promise not pending\n")
 		return state, fmt.Errorf("expected '%s', got '%s'", openapi.PromiseStatePENDING, respObj.State)
+	}
+	if resp.code == http.StatusOK {
+		p, err := state.Get(respObj.Id)
+		if err != nil {
+			return state, fmt.Errorf("promise %s must exist", respObj.Id)
+		}
+		if respObj.State != p.State {
+			return state, fmt.Errorf("expected '%s', got '%s'", p.State, respObj.State)
+		}
 	}
 
 	newState := utils.DeepCopy(state)
