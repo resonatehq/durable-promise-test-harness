@@ -168,8 +168,17 @@ func (v *CreatePromiseVerifier) Verify(state State, req, resp event) (State, err
 	if resp.code != http.StatusCreated && resp.code != http.StatusOK {
 		return state, fmt.Errorf("expected '%d' or '%d', got '%d'", http.StatusCreated, http.StatusOK, resp.code)
 	}
-	if respObj.State != openapi.PromiseStatePENDING {
+	if resp.code == http.StatusCreated && respObj.State != openapi.PromiseStatePENDING {
 		return state, fmt.Errorf("expected '%s', got '%s'", openapi.PromiseStatePENDING, respObj.State)
+	}
+	if resp.code == http.StatusOK {
+		p, err := state.Get(respObj.Id)
+		if err != nil {
+			return state, fmt.Errorf("promise %s must exist", respObj.Id)
+		}
+		if respObj.State != p.State {
+			return state, fmt.Errorf("expected '%s', got '%s'", p.State, respObj.State)
+		}
 	}
 
 	newState := utils.DeepCopy(state)

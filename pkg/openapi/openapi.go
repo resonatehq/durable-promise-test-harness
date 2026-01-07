@@ -44,8 +44,6 @@ type Promise struct {
 	CompletedOn               *int              `json:"completedOn,omitempty"`
 	CreatedOn                 *int              `json:"createdOn,omitempty"`
 	Id                        string            `json:"id"`
-	IdempotencyKeyForComplete *string           `json:"idempotencyKeyForComplete,omitempty"`
-	IdempotencyKeyForCreate   *string           `json:"idempotencyKeyForCreate,omitempty"`
 	Param                     PromiseValue      `json:"param"`
 	State                     PromiseState      `json:"state"`
 	Tags                      map[string]string `json:"tags"`
@@ -74,14 +72,8 @@ type SearchPromisesResponseObj struct {
 // Id defines model for Id.
 type Id = string
 
-// IdempotencyKey defines model for IdempotencyKey.
-type IdempotencyKey = string
-
 // RequestId defines model for RequestId.
 type RequestId = string
-
-// Strict defines model for Strict.
-type Strict = bool
 
 // SearchPromisesParams defines parameters for SearchPromises.
 type SearchPromisesParams struct {
@@ -117,12 +109,6 @@ type CreatePromiseJSONBody struct {
 
 // CreatePromiseParams defines parameters for CreatePromise.
 type CreatePromiseParams struct {
-	// IdempotencyKey Deduplicates multiple requests
-	IdempotencyKey *IdempotencyKey `json:"idempotency-key,omitempty"`
-
-	// Strict If true, deduplicates only when promise state matches the request
-	Strict *Strict `json:"strict,omitempty"`
-
 	// RequestId Unique ID for each request
 	RequestId *RequestId `json:"request-id,omitempty"`
 }
@@ -137,12 +123,6 @@ type PatchPromisesIdJSONBody struct {
 type PatchPromisesIdParams struct {
 	// RequestId Unique ID for each request
 	RequestId *RequestId `json:"request-id,omitempty"`
-
-	// IdempotencyKey Deduplicates multiple requests
-	IdempotencyKey *IdempotencyKey `json:"idempotency-key,omitempty"`
-
-	// Strict If true, deduplicates only when promise state matches the request
-	Strict *Strict `json:"strict,omitempty"`
 }
 
 // CreatePromiseJSONRequestBody defines body for CreatePromise for application/json ContentType.
@@ -464,38 +444,15 @@ func NewCreatePromiseRequestWithBody(server string, params *CreatePromiseParams,
 	req.Header.Add("Content-Type", contentType)
 
 	if params != nil {
-
-		if params.IdempotencyKey != nil {
+		if params.RequestId != nil {
 			var headerParam0 string
 
-			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "idempotency-key", runtime.ParamLocationHeader, *params.IdempotencyKey)
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "request-id", runtime.ParamLocationHeader, *params.RequestId)
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("idempotency-key", headerParam0)
-		}
-
-		if params.Strict != nil {
-			var headerParam1 string
-
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "strict", runtime.ParamLocationHeader, *params.Strict)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("strict", headerParam1)
-		}
-
-		if params.RequestId != nil {
-			var headerParam2 string
-
-			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "request-id", runtime.ParamLocationHeader, *params.RequestId)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("request-id", headerParam2)
+			req.Header.Set("request-id", headerParam0)
 		}
 
 	}
@@ -593,29 +550,6 @@ func NewPatchPromisesIdRequestWithBody(server string, id Id, params *PatchPromis
 
 			req.Header.Set("request-id", headerParam0)
 		}
-
-		if params.IdempotencyKey != nil {
-			var headerParam1 string
-
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "idempotency-key", runtime.ParamLocationHeader, *params.IdempotencyKey)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("idempotency-key", headerParam1)
-		}
-
-		if params.Strict != nil {
-			var headerParam2 string
-
-			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "strict", runtime.ParamLocationHeader, *params.Strict)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("strict", headerParam2)
-		}
-
 	}
 
 	return req, nil
