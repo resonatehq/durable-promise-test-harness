@@ -1,6 +1,9 @@
-# Durable Promise Test Harness 
+# Legacy Durable Promise Test Harness
 
-This test harness is a verification system that checks implementations for conformance to the [Durable Promise Specification](https://github.com/resonatehq/durable-promise). 
+> [!WARNING]
+> **This repository is archived.** It was the conformance test harness for the legacy REST durable-promise spec, paired with [resonatehq/resonate-legacy-server](https://github.com/resonatehq/resonate-legacy-server) (deprecated as of v0.8.2). The current Resonate server ([resonatehq/resonate](https://github.com/resonatehq/resonate), Rust) uses an RPC envelope contract that this harness does not exercise — see its `diff/` directory for the current differential testing setup. The original durable-promise spec has been folded into the broader [Distributed Async Await Specification](https://github.com/resonatehq/distributed-async-await.io); the [durable-promise-specification](https://github.com/resonatehq/durable-promise-specification) repo is preserved for historical reference.
+
+This test harness is a verification system that checks implementations for conformance to the [Durable Promise Specification](https://github.com/resonatehq/durable-promise-specification).
 
 ## Architecture
 
@@ -17,7 +20,7 @@ The test harness is composed of four key components working together:
 
 ### Checker 
 
-The `Checker` validates that the operation history follows the specifications of the [Durable Promise API](https://github.com/resonatehq/durable-promise). It is the final validation step.
+The `Checker` validates that the operation history follows the specifications of the [Durable Promise API](https://github.com/resonatehq/durable-promise-specification). It is the final validation step.
 
 ### LocalStore 
 
@@ -29,7 +32,7 @@ The `Simulator` generates a simulated client and pseudo-random sequence of opera
 
 ### Durable Promise Server
 
-The `Durable Promise Server` implements the core [Durable Promise Specification](https://github.com/resonatehq/durable-promise). It is the system under test. 
+The `Durable Promise Server` implements the core [Durable Promise Specification](https://github.com/resonatehq/durable-promise-specification). It is the system under test.
 
 ## Usage 
 
@@ -59,12 +62,5 @@ Each event loop generates N operations in a batch per client. Each client execut
 
 ## Contributions
 
-We welcome bug reports, feature requests, and pull requests!
-
-Before submitting a PR, please make sure:
-
-- New tests are included
-- All tests are passing
-- Code is properly formatted
-- Documentation is updated
+This repository is archived and no longer accepts contributions. See the banner at the top for current testing patterns.
 
